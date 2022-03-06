@@ -123,9 +123,6 @@ only_female = [
     "illumise",
     "latias",
     "froslass",
-    "wormadam",
-    "vespiquen",
-    "salazzle",
     "happiny",
     "chansey",
     "blissey",
@@ -160,7 +157,6 @@ only_male = [
     "volbeat",
     "latios",
     "gallade",
-    "mothim",
     "tyrogue",
     "hitmonlee",
     "hitmonchan",
@@ -279,6 +275,29 @@ def add_branches_to_data(evo_branches, evo_data):
         for pokemon in branch:
             evo_data[pokemon] = branch
 
+def capitalize(str):
+    return str.capitalize()
+
+def generate_pokemon_selection_element(name):
+    split_name = name.split('-')
+
+    split_name_capitalized = list(map(capitalize, split_name))
+    for index in range(0, len(split_name_capitalized)):
+        if split_name_capitalized[index] == "Mr" or split_name_capitalized[index] == "Jr":
+            split_name_capitalized[index] += "."
+        elif split_name_capitalized[index] == "M":
+            split_name_capitalized[index] = "(Male)"
+        elif split_name_capitalized[index] == "F":
+            split_name_capitalized[index] = "(Female)"
+        elif split_name_capitalized[index] == "Farfetchd":
+            split_name_capitalized[index] = "Farfetch'd"
+        elif split_name_capitalized[index] == "Sirfetchd":
+            split_name_capitalized[index] = "Sirfetch'd"
+        elif split_name_capitalized[index] == "Alola" or split_name_capitalized[index] == "Galar" or split_name_capitalized[index] == "Hisui":
+            split_name_capitalized[index] = "(" + split_name_capitalized[index] + " Form)"
+
+    return [name, " ".join(split_name_capitalized)]
+
 """
 Pulls evolution data from PokeAPI and writes it to a file.
 """
@@ -332,9 +351,58 @@ def generate_gender_anomaly_pokemon_data():
     file = open("pokemon-gender-anomaly.json", "w")
     file.write(json.dumps(gender_anomalies, indent=4))
 
+def generate_pokemon_selection_lists():
+    all_pokemon_selections = []
+    two_gendered_pokemon_selections = []
+
+    gender_anomalies = json.load(open('pokemon-gender-anomaly.json'))
+
+    end_index = 898
+    error_indices = []
+    for index in range(1, end_index + 1):
+        print(index)
+        try:
+            response = requests.get("https://pokeapi.co/api/v2/pokemon/" + str(index))
+            pokemon_name = response.json()["species"]["name"]
+            selection_element = generate_pokemon_selection_element(pokemon_name)
+            all_pokemon_selections.append(selection_element)
+            if pokemon_name not in gender_anomalies["genderless"] and pokemon_name not in gender_anomalies["only_male"] and pokemon_name not in gender_anomalies["only_female"]:
+                two_gendered_pokemon_selections.append(selection_element)
+        except:
+            print("Error has occurred on index " + str(index))
+            error_indices.append(index)
+    
+    print("Adding Regional Forms")
+    for form in alolan_forms:
+        all_pokemon_selections.append(generate_pokemon_selection_element(form))
+        if form not in gender_anomalies["genderless"] and form not in gender_anomalies["only_male"] and form not in gender_anomalies["only_female"]:
+            two_gendered_pokemon_selections.append(selection_element)
+    
+    for form in galar_forms:
+        all_pokemon_selections.append(generate_pokemon_selection_element(form))
+        if form not in gender_anomalies["genderless"] and form not in gender_anomalies["only_male"] and form not in gender_anomalies["only_female"]:
+            two_gendered_pokemon_selections.append(selection_element)
+
+    for form in hisuian_forms:
+        all_pokemon_selections.append(generate_pokemon_selection_element(form))
+        if form not in gender_anomalies["genderless"] and form not in gender_anomalies["only_male"] and form not in gender_anomalies["only_female"]:
+            two_gendered_pokemon_selections.append(selection_element)
+
+    file = open("pokemon-all-selections.json", "w")
+
+    file.write(json.dumps(all_pokemon_selections, indent=4))
+
+    file = open("pokemon-two-gendered-selections.json", "w")
+
+    file.write(json.dumps(two_gendered_pokemon_selections, indent=4))
+
+    print("Indices with error: ")
+    print(error_indices)
+
 def main():
-    generate_evo_chain_data()
-    generate_gender_anomaly_pokemon_data()
+    # generate_evo_chain_data()
+    # generate_gender_anomaly_pokemon_data()
+    generate_pokemon_selection_lists()
 
 if __name__ == "__main__":
     main()

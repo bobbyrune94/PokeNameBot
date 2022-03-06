@@ -1,11 +1,31 @@
 {
-    "name": "nuzlocke_name_claim_bot",
-    "version": "1.0.0",
-    "description": "Discord bot for Pokemon Communities to claim Pokemon Evolutionary Lines for their streamers to use in a nuzlocke playthrough",
-    "main": "bot.js",
-    "author": "Kenneth Chen",
-    "dependencies": {
-        "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
-        "winston": "^3.6.0"
-    }
+  "name": "nuzlocke-name-claim-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Pokemon Communities to claim Pokemon Evolutionary Lines for their streamers to use in a nuzlocke playthrough",
+  "main": "index.js",
+  "dependencies": {
+    "@discordjs/builders": "^0.12.0",
+    "@discordjs/rest": "^0.3.0",
+    "discord-api-types": "^0.27.3",
+    "discord.io": "^2.5.3",
+    "discord.js": "^13.6.0",
+    "node-fetch": "^3.2.0",
+    "winston": "^3.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bobbyrune94/NuzlockeNameClaimBot.git"
+  },
+  "author": "Kenneth Chen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bobbyrune94/NuzlockeNameClaimBot/issues"
+  },
+  "homepage": "https://github.com/bobbyrune94/NuzlockeNameClaimBot#readme",
+  "devDependencies": {
+    "eslint": "^8.9.0"
+  }
 }
