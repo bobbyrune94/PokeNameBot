@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { getPokemonClaim, getUserClaims, isValidPokemon } = require('../utils/database-utils');
+const { getPokemonClaim, getUserClaims, isValidPokemon, didUserRemoveClaim } = require('../utils/database-utils');
 const { generateInvalidNameString, generateViewClaimNoUserClaimString, generateViewClaimUserHasClaimString,
-	generateNoUserClaimString, generateUserClaimString, sendEphemeralMessage } = require('../utils/string-utils');
+	generateNoUserClaimString, generateUserClaimString, sendEphemeralMessage,
+	generateRemovedClaimString } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -23,7 +24,8 @@ module.exports = {
 				.setName('claim')
 				.setDescription('Check your own claim if it exists'),
 		),
-	async execute(interaction) {
+	// eslint-disable-next-line no-unused-vars
+	async execute(interaction, isPermanent) {
 		const user = interaction.user.username;
 		if (interaction.options.getSubcommand() === 'pokemon') {
 			const pokemon = interaction.options.getString('pokemon').toLowerCase();
@@ -42,6 +44,10 @@ module.exports = {
 		else if (interaction.options.getSubcommand() === 'claim') {
 			const userClaim = getUserClaims(user);
 			if (userClaim == undefined) {
+				const nextClaimDate = didUserRemoveClaim(user, interaction.guild.name);
+				if (nextClaimDate != undefined) {
+					return sendEphemeralMessage(interaction, generateRemovedClaimString(user, nextClaimDate));
+				}
 				return sendEphemeralMessage(interaction, generateNoUserClaimString(user));
 			}
 			else {

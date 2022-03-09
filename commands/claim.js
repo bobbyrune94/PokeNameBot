@@ -1,8 +1,9 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, addClaimToDatabase, getPokemonClaim, isValidPokemon,
-	getPokemonEvolutionaryLine, getNicknameFromInteraction } = require('../utils/database-utils');
+	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim } = require('../utils/database-utils');
 const { toCapitalCase, generateInvalidNameString, generateUserAlreadyClaimedString, generateDBEditErrors,
-	generatePokemonAlreadyClaimedString, generateSuccessfulClaimString, sendEphemeralMessage } = require('../utils/string-utils');
+	generatePokemonAlreadyClaimedString, generateSuccessfulClaimString, sendEphemeralMessage,
+	generateRemovedClaimString } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -48,7 +49,7 @@ module.exports = {
 						.setRequired(true),
 				),
 		),
-	async execute(interaction) {
+	async execute(interaction, isPermanent) {
 		const user = interaction.user.username;
 
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
@@ -58,8 +59,13 @@ module.exports = {
 
 		const userClaim = getUserClaims(user);
 		if (userClaim != undefined) {
-			const expireDate = new Date('2022-10-12'); // TODO: get date from userClaims and add 3 months to it
-			return sendEphemeralMessage(interaction, generateUserAlreadyClaimedString(user, expireDate));
+			const expireDate = new Date('2022-10-12'); // TODO: get date from userClaims.expireDate
+			return sendEphemeralMessage(interaction, 'EarlyClaimError: ' + generateUserAlreadyClaimedString(user, expireDate));
+		}
+
+		const nextClaimDate = didUserRemoveClaim(user, interaction.guild.name);
+		if (nextClaimDate != undefined) {
+			return sendEphemeralMessage(interaction, generateRemovedClaimString(user, nextClaimDate));
 		}
 
 		const pokemonClaim = getPokemonClaim(pokemon_name);
@@ -76,7 +82,7 @@ module.exports = {
 
 		let errorClaims = [];
 		evoLine.forEach(pokemon => {
-			if (!addClaimToDatabase(pokemon, user, nickname)) {
+			if (!addClaimToDatabase(pokemon, user, nickname, isPermanent)) {
 				console.log('Error adding claim for ' + toCapitalCase(pokemon));
 				errorClaims += pokemon;
 			}

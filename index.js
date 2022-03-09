@@ -2,6 +2,9 @@ const fs = require('node:fs');
 const { Client, Collection, Intents } = require('discord.js');
 const { token } = require('./config.json');
 const { generateCommandString, sendEphemeralMessage } = require('./utils/string-utils');
+const { canUserMakeClaim } = require('./utils/database-utils');
+const { handleDescriptionSelectMenu } = require('./utils/select-menu-utils');
+
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
@@ -18,12 +21,25 @@ client.once('ready', () => {
 });
 
 client.on('interactionCreate', async interaction => {
-	if (!interaction.isCommand()) return;
+	if (!interaction.isCommand()) {
+		if (!interaction.isSelectMenu()) return;
+		console.log('Select Menu Event Detected.');
+		handleDescriptionSelectMenu(interaction);
+		return;
+	}
 
 	if (interaction.channel.name != 'nuzlocke-name-claim') {
 		sendEphemeralMessage(interaction, 'WrongChannelError: Please use this command in the "nuzlocke-name-claim" channel only.');
 		return;
 	}
+
+	console.log('Server Name: ' + interaction.guild.name);
+	const rolePermissions = canUserMakeClaim(interaction.member, interaction.guild.name);
+	console.log('Returned Role Permissions: ' + rolePermissions);
+	if (!rolePermissions[0] && !rolePermissions[1]) {
+		return sendEphemeralMessage(interaction, 'MissingRoleError: You do not have the correct role to use these commands. If you believe you should, please contact your server\'s moderators to grant you that role.');
+	}
+	console.log('User is allowed to make a claim in the system');
 
 	const command = client.commands.get(interaction.commandName);
 
@@ -31,7 +47,7 @@ client.on('interactionCreate', async interaction => {
 
 	try {
 		console.log('Executing command: ' + generateCommandString(interaction));
-		await command.execute(interaction);
+		await command.execute(interaction, rolePermissions[1]);
 	}
 	catch (error) {
 		console.error(error);

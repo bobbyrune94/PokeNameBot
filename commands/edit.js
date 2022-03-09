@@ -35,8 +35,9 @@ module.exports = {
 						.setRequired(true),
 				),
 		),
-	async execute(interaction) {
+	async execute(interaction, isPermanent) {
 		const user = interaction.user.username;
+
 		const userClaim = getUserClaims(user);
 		if (userClaim == undefined) {
 			return sendEphemeralMessage(interaction, generateNoUserClaimString(user));
@@ -52,7 +53,7 @@ module.exports = {
 
 		let errorClaims = [];
 		claimedPokemon.forEach(pokemon => {
-			if (!addClaimToDatabase(pokemon, user, nickname)) {
+			if (!addClaimToDatabase(pokemon, user, nickname, isPermanent)) {
 				console.log('Error adding claim for ' + toCapitalCase(pokemon));
 				errorClaims += pokemon;
 			}

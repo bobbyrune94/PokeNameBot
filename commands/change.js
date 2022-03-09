@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, addClaimToDatabase, getPokemonClaim, removeClaimFromDatabase,
 	isValidPokemon, getPokemonEvolutionaryLine, getNicknameFromInteraction } = require('../utils/database-utils');
-const { addMonths } = require('../utils/date-utils');
 const { toCapitalCase, generateInvalidNameString, generateNoUserClaimString, generateDBEditErrors,
 	generatePokemonAlreadyClaimedString, generateEarlyClaimChangeString,
 	generateSuccessfulClaimChangeString, sendEphemeralMessage } = require('../utils/string-utils');
@@ -50,7 +49,7 @@ module.exports = {
 						.setRequired(true),
 				),
 		),
-	async execute(interaction) {
+	async execute(interaction, isPermanent) {
 		const user = interaction.user.username;
 
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
@@ -59,12 +58,12 @@ module.exports = {
 		}
 
 		const pokemonClaim = getPokemonClaim(pokemon_name);
-		if (pokemonClaim == undefined) {
+		if (pokemonClaim != undefined) {
 			return sendEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
 		}
 
 		const userClaim = getUserClaims(user);
-		if (userClaim != undefined) {
+		if (userClaim == undefined) {
 			return sendEphemeralMessage(interaction, generateNoUserClaimString(user));
 		}
 
@@ -72,8 +71,7 @@ module.exports = {
 		const oldNickname = 'Tiggs';
 		const oldClaims = ['shinx', 'luxio', 'luxray'];
 
-		const claimDate = new Date('2020-10-12'); // TODO: get date from userClaims
-		const changeClaimDate = addMonths(claimDate, 3);
+		const changeClaimDate = new Date('2020-10-12'); // TODO: get date from userClaims
 		if (Date.now() < changeClaimDate) {
 			return sendEphemeralMessage(interaction, generateEarlyClaimChangeString(user, changeClaimDate));
 		}
@@ -87,7 +85,7 @@ module.exports = {
 
 		let addClaimErrors = [];
 		newEvoLine.forEach(pokemon => {
-			if (!addClaimToDatabase(pokemon, user, newNickname)) {
+			if (!addClaimToDatabase(pokemon, user, newNickname, isPermanent)) {
 				console.log('Error adding claim for ' + toCapitalCase(pokemon));
 				addClaimErrors += pokemon;
 			}
