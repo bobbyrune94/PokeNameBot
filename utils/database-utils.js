@@ -1,24 +1,55 @@
-const pokemonEvoLines = require('../pokemon-evolution-lines.json');
-const genderAnomalyPokemon = require('../pokemon-gender-anomaly.json');
-const { addMonths } = require('./date-utils.js');
-const { toCapitalCase, generateListString, generateInvalidGenderedNickname,
-	generateGenderedNickname } = require('./string-utils.js');
+/* eslint-disable no-undef */
+const axios = require('axios');
+const { toCapitalCase, generateInvalidGenderedNickname, generateGenderedNickname, generateClaimsTableName,
+	CONTACTKENNYISSUESSTRING } = require('./string-utils.js');
+
+const INVALIDPOKEMONNAMESTRING = 'UndefinedPokemon';
+const INVALIDSERVERNAME = 'UndefinedServer';
+const NOCLAIMSSTRING = 'NoClaimsFound';
+const NOREMOVECLAIMDATA = 'NoRemoveClaimData';
+const ERRORCLAIMSTRING = 'CLAIMERRORFOUND';
+const TWOGENDEREDSTRING = 'two_genders';
 
 /**
  * Queries the claims database to add the user and nickname claims for the pokemon
+ * @param {string} serverName the name of the server the command was called in
  * @param {string} pokemon the pokemon to add the claim to
  * @param {string} user the user that claimed the pokemon
  * @param {string} nickname the nickname for the pokemon
  * @param {boolean} isPermanent whether the claim is permament
  * @returns whether the database edit was successful
  */
-function addClaimToDatabase(pokemon, user, nickname, isPermanent) {
-	const nextChangeDate = addMonths(Date.now(), 3);
-	console.log('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' as ' + nickname + ' Next Date to Change Claim: ' + nextChangeDate.toDateString());
+async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent) {
+	const claimsTableName = generateClaimsTableName(serverName);
+
+	console.log('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' in table ' + claimsTableName + ' as '
+	+ nickname + ' Next Date to Change Claim: ' + nextChangeDate.toDateString());
 	isPermanent ? console.log('Claim will be permanent') : console.log('Claim will not be permanent and deleted after 1 year');
-	// TODO: update with API call to database once it is set up
-	console.log('Successfully added claim for ' + toCapitalCase(pokemon) + ' into database.');
-	return true;
+	let successful = false;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesaddclaim',
+		{
+			'table-name': claimsTableName,
+			'pokemon': pokemon,
+			'username': user,
+			'nickname': nickname,
+			'next-change-date': nextChangeDate,
+			'is-permanent': isPermanent,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Successfully added claim for ' + toCapitalCase(pokemon) + ' into ' + claimsTableName + ' database.');
+				successful = true;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return successful;
 }
 
 /**
@@ -27,11 +58,80 @@ function addClaimToDatabase(pokemon, user, nickname, isPermanent) {
  * @param {string} pokemon the pokemon to remove the claim from
  * @returns whether the database edit was successful
  */
-function removeClaimFromDatabase(pokemon) {
+async function removeClaimFromDatabase(pokemon, serverName) {
 	console.log('Removing claim from ' + toCapitalCase(pokemon));
-	// TODO: update with API call to database once it is set up
-	console.log('Successfully removed claim for ' + toCapitalCase(pokemon) + ' from database.');
-	return true;
+
+	const claimsTableName = generateClaimsTableName(serverName);
+	let successful = false;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesremoveclaim',
+		{
+			'table-name': claimsTableName,
+			'pokemon': pokemon,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Successfully removed claim for ' + toCapitalCase(pokemon) + ' in ' + claimsTableName + ' database.');
+				successful = true;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return successful;
+}
+
+/**
+ * Formats the given response into a simplified JSON object for the bot to consume
+ * @param {[Object]} response API response from GetUserClaims
+ * @returns the simplified JSON object or error string if there was an error with the claims
+ */
+function formatUserClaims(user, response) {
+	const pokemonClaimed = [];
+	let nickname = undefined;
+	let nextChangeDate = undefined;
+	let isPermanent = undefined;
+	response.forEach(claim => {
+		pokemonClaimed.push(claim['pokemon']);
+
+		if (nickname == undefined) { // ensure the nickname is consistent among all claims
+			nickname = claim['nickname'];
+		}
+		else {
+			if (claim['nickname'] != nickname) {
+				return ERRORCLAIMSTRING;
+			}
+		}
+
+		if (nextChangeDate == undefined) { // ensure the next-change-date is consistent among all claims
+			nextChangeDate = claim['next-change-date'];
+		}
+		else {
+			if (claim['next-change-date'] != nextChangeDate) {
+				return ERRORCLAIMSTRING;
+			}
+		}
+
+		if (isPermanent == undefined) { // ensure the permanence is consistent among all claims
+			isPermanent = claim['is-permanent'];
+		}
+		else {
+			if (claim['is-permanent'] != isPermanent) {
+				return ERRORCLAIMSTRING;
+			}
+		}
+	});
+	return {
+		'claimed-pokemon': pokemonClaimed,
+		'nickname': nickname,
+		'username': user,
+		'next-change-date': nextChangeDate,
+		'is-permanent': isPermanent,
+	};
 }
 
 /**
@@ -39,11 +139,43 @@ function removeClaimFromDatabase(pokemon) {
  * @param {string} user the user to get the claims for
  * @returns all claims that the user has made formatted as a JSON object
  */
-function getUserClaims(user) {
-	console.log('Getting all Claims for ' + user);
-	// TODO: update with API call to database once it is set up
-	console.log('Retrieved ' + user + '\'s claim from the database.');
-	return undefined;
+async function getUserClaims(user, serverName) {
+	const claimsTableName = generateClaimsTableName(serverName);
+	console.log('Getting all Claims for ' + user + ' in ' + claimsTableName);
+	let userClaims = undefined;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesgetuserclaim',
+		{
+			'table-name': claimsTableName,
+			'username': user,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Got User Claim: ' + JSON.stringify(result['data']['body']));
+				const formattedClaims = formatUserClaims(user, result['data']['body']);
+				if (formattedClaims == ERRORCLAIMSTRING) {
+					console.log('Error formatting user claims. Some of the fields may be mismatched');
+					userClaims = 'ClaimsFormattingError: Error formatting user claims ' + JSON.stringify(result['data']['body']) +
+					' Please contact a moderator to resolve this issue. ' + CONTACTKENNYISSUESSTRING;
+				}
+				else {
+					console.log('Successfully formatted user claims into following object: ' + JSON.stringify(formattedClaims));
+					userClaims = formattedClaims;
+				}
+			}
+			else if (statusCode == 404) {
+				console.log('No Claim Found for ' + user);
+				userClaims = NOCLAIMSSTRING;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return userClaims;
 }
 
 /**
@@ -51,64 +183,110 @@ function getUserClaims(user) {
  * @param {string} pokemon the pokemon to get claim data for
  * @returns the claim data for the associated pokemon
  */
-function getPokemonClaim(pokemon) {
+async function getPokemonClaim(pokemon, serverName) {
+	const claimsTableName = generateClaimsTableName(serverName);
 	console.log('Getting claim for ' + toCapitalCase(pokemon));
-	// TODO: update with API call to claims database once it is set up
-	console.log('Retrieved ' + toCapitalCase(pokemon) + '\'s claim data from the database.');
-	return undefined;
-}
-
-/**
- * Queries the evo-line database to check if the given argument is a valid pokemon name
- * @param {string} name the name of the pokemon name to check
- * @returns whether the name parameter is a valid claimable pokemon name
- */
-function isValidPokemon(name) {
-	// TODO: replace with API query to evo-lines database
-	console.log('Checking if ' + name + ' is a valid Pokemon');
-	const isValid = name in pokemonEvoLines;
-
-	isValid ? console.log(name + ' is a valid Pokemon name.') : console.log(name + ' is not a valid Pokemon name.');
-	return isValid;
+	let pokemonClaim = undefined;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesgetpokemonclaim',
+		{
+			'table-name': claimsTableName,
+			'pokemon': pokemon,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Got Pokemon Claim: ' + JSON.stringify(result['data']['body']));
+				pokemonClaim = result['data']['body'];
+			}
+			else if (statusCode == 404) {
+				console.log('Invalid Pokemon Name');
+				pokemonClaim = INVALIDPOKEMONNAMESTRING;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return pokemonClaim;
 }
 
 /**
  * Queries the evo-line database to get the evolutionary line for the given pokemon
  * @param {string} pokemon the pokemon name to get the evolutionary line to
- * @returns the list of pokemon in the argument's evolutionary line
+ * @returns the list of pokemon in the argument's evolutionary line,
+ * UndefinedPokemon if the pokemon doesn't exist,
+ * or undefined if there was an error
  */
-function getPokemonEvolutionaryLine(pokemon) {
+async function getPokemonEvolutionaryLine(pokemon) {
 	// TODO: replace with API query to evo-lines database
 	console.log('Getting the evolutionary line for ' + pokemon);
-	const evoLine = pokemonEvoLines[pokemon];
-	console.log('Evolutionary line for ' + pokemon + ': ' + generateListString(evoLine));
-	return evoLine;
+
+	let evoline = undefined;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/evolinetableget',
+		{
+			'pokemon': pokemon,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Database Evolution Line: ' + JSON.stringify(result['data']['body']));
+				evoline = result['data']['body'];
+			}
+			else if (statusCode == 404) {
+				console.log('Invalid pokemon name');
+				evoline = INVALIDPOKEMONNAMESTRING;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return evoline;
 }
 
 /**
  * Queries the gender-anomaly database to check if the given pokemon is a gender anomaly
  * Gender anomalies include all pokemon who are genderless, only males, and only females
  * @param {string} pokemon the pokemon to check for
- * @returns whether the pokemon is an anomaly. True if it is, false if it has two genders
+ * @returns the string representation of the pokemon's gender situation
+ * 'genderless', 'only_male', or 'only_female' if there is an anomaly
+ * 'two_gendered' if the pokemon can be male or female
+ * undefined if there was an issue
  */
-function isGenderAnomalyPokemon(pokemon) {
+async function isGenderAnomalyPokemon(pokemon) {
 	// TODO: replace with API query to gender-anomalies database
 	console.log('Checking if ' + pokemon + ' is a gender anomaly');
 
-	const isGenderless = genderAnomalyPokemon['genderless'].includes(pokemon);
-	const isOnlyMale = genderAnomalyPokemon['only_male'].includes(pokemon);
-	const isOnlyFemale = genderAnomalyPokemon['only_female'].includes(pokemon);
-
-	if (isGenderless) {
-		console.log(pokemon + ' are genderless pokemon.');
-	}
-	else if (isOnlyMale) {
-		console.log(pokemon + ' are only male pokemon.');
-	}
-	else if (isOnlyFemale) {
-		console.log(pokemon + ' are only female pokemon.');
-	}
-	return [isGenderless, isOnlyMale, isOnlyFemale];
+	let anomaly = undefined;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/genderanomalytableget',
+		{
+			'pokemon': pokemon,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Claim Roles: ' + JSON.stringify(result['data']['body']));
+				anomaly = result['data']['body'];
+			}
+			else if (statusCode == 404) {
+				console.log('Pokemon Has Two Genders');
+				anomaly = TWOGENDEREDSTRING;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return anomaly;
 }
 
 /**
@@ -118,7 +296,7 @@ function isGenderAnomalyPokemon(pokemon) {
  * @param {string} pokemon the pokemon getting nicknamed
  * @returns the properly formatted nickname or the InvalidGenderedClaimError message
  */
-function getNicknameFromInteraction(interaction, pokemon) {
+async function getNicknameFromInteraction(interaction, pokemon) {
 	console.log('Getting Nickname for ' + toCapitalCase(pokemon));
 	if (interaction.options.getSubcommand() === 'default') {
 		const nickname = interaction.options.getString('nickname');
@@ -126,9 +304,9 @@ function getNicknameFromInteraction(interaction, pokemon) {
 		return nickname;
 	}
 	else if (interaction.options.getSubcommand() === 'gendered') {
-		const genderAnomalyArray = isGenderAnomalyPokemon(pokemon);
-		if (genderAnomalyArray.includes(true)) {
-			return generateInvalidGenderedNickname(pokemon, genderAnomalyArray);
+		const anomalyString = await isGenderAnomalyPokemon(pokemon);
+		if (anomalyString != TWOGENDEREDSTRING) {
+			return generateInvalidGenderedNickname(pokemon, anomalyString);
 		}
 
 		const maleNickname = interaction.options.getString('male-nickname');
@@ -147,16 +325,35 @@ function getNicknameFromInteraction(interaction, pokemon) {
  * claimRoles represents the roles that are allowed to make claims. Claims, be default, will clear after 1 year. An empty array represents that anyone can make a claim
  * permanentClaimRoles represent those roles who can make permanent claims that won't clear after 1 year. An empty array represents that all claims are permanent
  * @param {string} server the discord server name
- * @returns a JSON object with 'claimRoles' and 'permaClaimRoles' as fields with their associated lists of roles
+ * @returns a JSON object with 'claim-roles' and 'perma-claim-roles' as fields with their associated lists of roles
  */
-function getClaimableRoles(server) {
+async function getClaimableRoles(server) {
 	console.log('Getting claimable roles for server ' + server);
-	// TODO: update with API call to roles database once it is set up
+	let claimRoles = undefined;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimrolestableget',
+		{
+			'server-name': server,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Claim Roles: ' + JSON.stringify(result['data']['body']));
+				claimRoles = result['data']['body'];
+			}
+			else if (statusCode == 404) {
+				console.log('Invalid Server Name');
+				evoline = INVALIDSERVERNAME;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
 	console.log('Retrieved claimable roles for server.');
-	return {
-		'claimRoles': ['@everyone'],
-		'permaClaimRoles': ['@everyone'],
-	};
+	return claimRoles;
 }
 
 /**
@@ -166,8 +363,16 @@ function getClaimableRoles(server) {
  * @returns a two-element boolean array where the first element represents whether the user can make a claim
  * and the second element represents whether the claim will be permanent.
  */
-function canUserMakeClaim(member, server) {
-	const claimRoles = getClaimableRoles(server);
+async function canUserMakeClaim(member, server) {
+	const claimRoles = await getClaimableRoles(server);
+
+	if (claimRoles == INVALIDSERVERNAME) {
+		console.error('INVALIDSERVERERROR: Server has not been onboarded to system yet');
+		return [false, false];
+	}
+	else if (claimRoles == undefined) {
+		return [false, false];
+	}
 
 	console.log('Checking if ' + member.user.username + ' has the appropriate roles to make a claim.');
 	const userRoles = member.roles.cache;
@@ -176,11 +381,11 @@ function canUserMakeClaim(member, server) {
 	let canClaimArray = [false, false];
 	userRoles.each(role => {
 		console.log('Checking if ' + role.name + ' can make a claim in the system');
-		if (claimRoles['claimRoles'].includes(role.name)) {
+		if (claimRoles['claim-roles'].includes(role.name)) {
 			console.log('User has ' + role.name + ' role, allowing them to make a claim in the system');
 			canClaimArray[0] = true;
 		}
-		if (claimRoles['permaClaimRoles'].includes(role.name)) {
+		if (claimRoles['perma-claim-roles'].includes(role.name)) {
 			console.log('User has ' + role.name + ' role, allowing them to make a permanent claim in the system');
 			canClaimArray[1] = true;
 		}
@@ -196,11 +401,30 @@ function canUserMakeClaim(member, server) {
  * @param {Date} nextClaimDate the next available date the user can make a claim
  * @returns true if the entry was added, false if there was an error
  */
-function addEntryToRemoveClaimTable(user, server, nextClaimDate) {
+async function addEntryToRemoveClaimTable(user, server, nextClaimDate) {
 	console.log('Adding ' + user + '\'s removed claim in the ' + server + ' to the database.');
-	// TODO: add entry to the remove-claims database
-	console.log('Entry has been added. The next time you can claim is ' + nextClaimDate.toDateString());
-	return true;
+	let successful = false;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableadd',
+		{
+			'username': user,
+			'server-name': server,
+			'next-claim-date': nextClaimDate,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Entry has been added. The next time you can claim is ' + nextClaimDate.toDateString());
+				successful = true;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
+	return successful;
 }
 
 /**
@@ -209,7 +433,7 @@ function addEntryToRemoveClaimTable(user, server, nextClaimDate) {
  * @param {string} server the name of the discord server the command was executed in
  * @returns true if the entry was successfully removed, false if there was an error
  */
-function removeEntryFromRemoveClaimTable(user, server) {
+async function removeEntryFromRemoveClaimTable(user, server) {
 	console.log('Removing entry in remove-claims database for ' + user + ' in discord server ' + server);
 	// TODO: remove entry from the remove-claims database
 	console.log('Entry successfully removed');
@@ -222,28 +446,57 @@ function removeEntryFromRemoveClaimTable(user, server) {
  * This is to prevent people from removing claims and immediately re-claiming something
  * @param {string} user the username of the message sender
  * @param {string} server the name of the server
- * @returns undefined if the user can make a claim, the next possible claim date if not
+ * @returns the next available claim date if the user made a claim within the last three months
+ * false if the user can make a claim now (either no entry or entry > 3 months old)
+ * undefined if there was an error
  */
-function didUserRemoveClaim(user, server) {
+async function didUserRemoveClaim(user, server) {
 	console.log('Checking Remove Claims Database for ' + user + ' from ' + server);
-	// TODO: add query for remove-claims database for user and server
-	const removedClaim = undefined;
+
+	let nextClaimDate = undefined;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableget',
+		{
+			'username': user,
+			'server-name': server,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				console.log('Remove-Claim Data: ' + JSON.stringify(result['data']['body']));
+				nextClaimDate = result['data']['body'];
+			}
+			else if (statusCode == 404) {
+				console.log('No Remove-Claim Data Found');
+				nextClaimDate = NOREMOVECLAIMDATA;
+			}
+			else {
+				console.log(result['data']['body']);
+			}
+		})
+		.catch(error => {
+			console.log(error);
+		});
 	console.log('Retrieved remove claim data');
 
-	if (removedClaim != undefined) {
+	if (nextClaimDate == NOREMOVECLAIMDATA) {
 		console.log('No entry found in remove-claims table');
+		return false;
+	}
+	if (nextClaimDate == undefined) {
+		console.log('Unknown ddb error occurred');
 		return undefined;
 	}
 
-	const nextClaimDate = new Date('2022-01-20');
-	if (nextClaimDate > Date.now()) {
-		console.log('User made a claim within the past 3 months. The next available claim date is ' + nextClaimDate.toDateString());
+	const returnedDate = new Date(nextClaimDate);
+	if (returnedDate > Date.now()) {
+		console.log('User made a claim within the past 3 months. The next available claim date is ' + returnedDate.toDateString());
 		return nextClaimDate;
 	}
 	console.log('User made a claim that they removed more than 3 months ago. Removing claim from remove-claim table.');
-	removeEntryFromRemoveClaimTable(user, server);
-	return undefined;
+	await removeEntryFromRemoveClaimTable(user, server);
+	return false;
 }
 
 module.exports = { addClaimToDatabase, removeClaimFromDatabase, getUserClaims, getPokemonClaim, canUserMakeClaim,
-	isValidPokemon, getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim, addEntryToRemoveClaimTable };
+	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim, addEntryToRemoveClaimTable, INVALIDPOKEMONNAMESTRING };

@@ -1,9 +1,11 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { getUserClaims, addClaimToDatabase, getPokemonClaim, isValidPokemon,
-	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim } = require('../utils/database-utils');
+const { getUserClaims, addClaimToDatabase, getPokemonClaim,
+	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim,
+	INVALIDPOKEMONNAMESTRING } = require('../utils/database-utils');
+const { addMonths } = require('../utils/date-utils');
 const { toCapitalCase, generateInvalidNameString, generateUserAlreadyClaimedString, generateDBEditErrors,
-	generatePokemonAlreadyClaimedString, generateSuccessfulClaimString, sendEphemeralMessage,
-	generateRemovedClaimString } = require('../utils/string-utils');
+	generatePokemonAlreadyClaimedString, generateSuccessfulClaimString, sendDeferredEphemeralMessage,
+	generateRemovedClaimString, generateDatabaseErrorString } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -50,50 +52,71 @@ module.exports = {
 				),
 		),
 	async execute(interaction, isPermanent) {
+		interaction.deferReply({ ephemeral: true });
+
 		const user = interaction.user.username;
-
+		const serverName = interaction.guild.name;
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
-		if (!isValidPokemon(pokemon_name)) {
-			return sendEphemeralMessage(generateInvalidNameString(pokemon_name));
+
+		const userClaim = await getUserClaims(user, interaction.guild.name);
+		if (userClaim == undefined) {
+			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
+		}
+		else if (typeof userClaim == 'object') {
+			console.log('User claim found, unable to make claim');
+			const nextChangeDate = new Date(userClaim['next-change-date']);
+			return sendDeferredEphemeralMessage(interaction, generateUserAlreadyClaimedString(user, nextChangeDate));
+		}
+		else if (typeof userClaim == 'string' && userClaim.includes('ClaimsFormattingError')) {
+			return sendDeferredEphemeralMessage(interaction, userClaim);
 		}
 
-		const userClaim = getUserClaims(user);
-		if (userClaim != undefined) {
-			const expireDate = new Date('2022-10-12'); // TODO: get date from userClaims.expireDate
-			return sendEphemeralMessage(interaction, 'EarlyClaimError: ' + generateUserAlreadyClaimedString(user, expireDate));
+		const nextClaimDate = await didUserRemoveClaim(user, serverName);
+		if (nextClaimDate == undefined) {
+			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
+		}
+		else if (typeof nextClaimDate == 'string') {
+			return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(user, new Date(nextClaimDate)));
 		}
 
-		const nextClaimDate = didUserRemoveClaim(user, interaction.guild.name);
-		if (nextClaimDate != undefined) {
-			return sendEphemeralMessage(interaction, generateRemovedClaimString(user, nextClaimDate));
+		const pokemonClaim = await getPokemonClaim(pokemon_name, interaction.guild.name);
+		if (pokemonClaim == INVALIDPOKEMONNAMESTRING) {
+			return sendDeferredEphemeralMessage(interaction, generateInvalidNameString(pokemon_name));
+		}
+		else if (pokemonClaim == undefined) {
+			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
+		}
+		if (pokemonClaim['nickname'] != 'UNDEFINED') {
+			return sendDeferredEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
 		}
 
-		const pokemonClaim = getPokemonClaim(pokemon_name);
-		if (pokemonClaim != undefined) {
-			return sendEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
+		const evoLine = await getPokemonEvolutionaryLine(pokemon_name);
+		if (evoLine == undefined) {
+			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 
-		const nickname = getNicknameFromInteraction(interaction, pokemon_name);
+		const nickname = await getNicknameFromInteraction(interaction, pokemon_name);
 		if (nickname.includes('InvalidGenderedClaimError')) {
-			return sendEphemeralMessage(interaction, nickname);
+			return sendDeferredEphemeralMessage(interaction, nickname);
 		}
 
-		const evoLine = getPokemonEvolutionaryLine(pokemon_name);
+		const newChangeDate = addMonths(new Date(Date.now()), 3);
 
 		let errorClaims = [];
-		evoLine.forEach(pokemon => {
-			if (!addClaimToDatabase(pokemon, user, nickname, isPermanent)) {
+		for (const index in evoLine) {
+			const pokemon = evoLine[index];
+			if (!(await addClaimToDatabase(serverName, pokemon, user, nickname, newChangeDate, isPermanent))) {
 				console.log('Error adding claim for ' + toCapitalCase(pokemon));
 				errorClaims += pokemon;
 			}
-		});
+		}
 
 		if (errorClaims.length > 0) {
-			return sendEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
+			return sendDeferredEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
 		}
 		else {
 			console.log('Claim has been made successfully.');
-			return sendEphemeralMessage(interaction, generateSuccessfulClaimString(user, evoLine, nickname));
+			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimString(user, evoLine, nickname));
 		}
 	},
 };

@@ -34,7 +34,7 @@ client.on('interactionCreate', async interaction => {
 	}
 
 	console.log('Server Name: ' + interaction.guild.name);
-	const rolePermissions = canUserMakeClaim(interaction.member, interaction.guild.name);
+	const rolePermissions = await canUserMakeClaim(interaction.member, interaction.guild.name);
 	console.log('Returned Role Permissions: ' + rolePermissions);
 	if (!rolePermissions[0] && !rolePermissions[1]) {
 		return sendEphemeralMessage(interaction, 'MissingRoleError: You do not have the correct role to use these commands. If you believe you should, please contact your server\'s moderators to grant you that role.');

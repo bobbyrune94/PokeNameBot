@@ -11,6 +11,13 @@ function sendEphemeralMessage(interaction, string) {
 	});
 }
 
+function sendDeferredEphemeralMessage(interaction, string) {
+	interaction.editReply({
+		content: string,
+		ephemeral: true,
+	});
+}
+
 /**
  * Converts the provided string to capital case.
  * Capital Case means that the first letter is capitalized and the rest of the string is lowercase
@@ -114,49 +121,52 @@ function generatePokemonAlreadyClaimedString(pokemon) {
 	return 'AlreadyClaimedError: ' + toCapitalCase(pokemon) + ' has already been claimed.';
 }
 
+function formatGenderAnomalyString(genderAnomalyString) {
+	switch (genderAnomalyString) {
+	case 'genderless':
+		return 'Genderless';
+	case 'only_male':
+		return 'Only Male';
+	case 'only_female':
+		return 'Only Female';
+	default:
+		return 'Unknown Anomaly String: ' + genderAnomalyString;
+	}
+}
+
 /**
  * Generates the error output string for a pokemon that has a gender anomaly, but is getting claimed with gender-specific nicknames
  * Will return separate messages depending on if it's a genderless, only male, or only female pokemon
- * @param {*} pokemon the pokemon with a gender-anomaly
- * @param {*} genderAnomalyArray the array representing which gender-anomaly the pokemon has
+ * @param {string} pokemon the pokemon with a gender-anomaly
+ * @param {string} genderAnomalyString a string representing the gender anomaly. Expected values are: 'genderless' | 'only_male' | 'only_female'
  * @returns the formatted error string
  */
-function generateInvalidGenderedNickname(pokemon, genderAnomalyArray) {
-	if (genderAnomalyArray.length != 3) {
-		return 'InvalidGenderedClaimError: Invalid Gender Anomaly Array ' + generateListString(genderAnomalyArray)
-        + ' Please contact Kenny on Discord at bobbyrune94#9138 so he can investigate this issue';
+function generateInvalidGenderedNickname(pokemon, genderAnomalyString) {
+	if (genderAnomalyString == undefined) {
+		return 'DDBError: The bot had issues accessing the gender-anomaly database. Please try again in a couple minutes as there might be an outage.';
 	}
-	if (genderAnomalyArray[0] == true) {
-		return 'InvalidGenderedClaimError: ' + toCapitalCase(pokemon) + ' has a genderless evolutionary line. Please try again with the "default" subcommand.';
-	}
-	else if (genderAnomalyArray[1] == true) {
-		return 'InvalidGenderedClaimError: ' + toCapitalCase(pokemon) + ' has a male-only evolutionary line. Please try again with the "default" subcommand.';
-	}
-	else if (genderAnomalyArray[2] == true) {
-		return 'InvalidGenderedClaimError: ' + toCapitalCase(pokemon) + ' has a female-only evolutionary line. Please try again with the "default" subcommand.';
-	}
+	return 'InvalidGenderedClaimError: ' + toCapitalCase(pokemon) + ' has a ' + formatGenderAnomalyString(genderAnomalyString) +
+	' evolutionary line. Please try again with the "default" subcommand.';
+}
+
+/**
+ * Generates the output string for when the user views a pokemon that has already been claimed
+ * @param {string} user the username of the user calling the command
+ * @param {string} pokemon the name of the pokemon
+ * @returns the formatted string
+ */
+function generateViewClaimAlreadyClaimedString(user, pokemon, evoline) {
+	return user + ', ' + toCapitalCase(pokemon) + ' has already been claimed. They have also already claimed ' + generateListString(evoline);
 }
 
 /**
  * Generates the output string for when a user views a claimable pokemon and doesn't have a claim of their own
  * @param {string} user the user executing the command
  * @param {string} pokemon the pokemon the user is checking the claims for
- * @returns the formatted error string
+ * @returns the formatted string
  */
-function generateViewClaimNoUserClaimString(user, pokemon) {
-	return user + ', ' + toCapitalCase(pokemon)
-    + ' has not been claimed yet and you have not claimed a Pokemon yet. Use the "/claim" command if you wish to claim it.';
-}
-
-/**
- * Generates the output string for when a user views a claimable pokemon, but has already made a claim of their own.
- * @param {string} user the user executing the command
- * @param {string} pokemon the pokemon the user is checking claims for
- * @returns the formatted error string
- */
-function generateViewClaimUserHasClaimString(user, pokemon) {
-	return user + ', ' + toCapitalCase(pokemon)
-    + ' has not been claimed yet, but you have already claimed a Pokemon. Use the "/change" command if you want to change your claim.';
+function generateViewClaimNotClaimedString(user, pokemon, evoline) {
+	return user + ', ' + toCapitalCase(pokemon) + ' has not been claimed yet. If you wish to claim this pokemon, you will also claim ' + generateListString(evoline);
 }
 
 /**
@@ -263,6 +273,23 @@ function generateRemovedClaimString(user, nextClaimDate) {
 }
 
 /**
+ * Generates the name of the claims table from the discord server's name
+ * It strips away any non-alphanumeric characters, then appends 'ClaimsTable' to the end
+ * Examples:
+ * Server Name: KungFu Krew -> KungFuKrewClaimsTable
+ * Server Name: Ta6's Terrible Server -> Ta6sTerribleServerClaimsTable
+ * @param {string} serverName the name of the discord server
+ * @returns the name of the discord's claim table
+ */
+function generateClaimsTableName(serverName) {
+	return serverName.replace(/[^a-zA-Z0-9]+/g, '') + 'ClaimsTable';
+}
+
+function generateDatabaseErrorString() {
+	return 'Database Error: An Error Occurred in the database. Please wait a while before trying again as this is likely an outage. If the issue persists, contact Kenny on discord at bobbyrune94#9138';
+}
+
+/**
  * Generates the usage information for the directions command
  * @returns the formatted info string
  */
@@ -361,10 +388,10 @@ function generateAllCommandInfoString() {
 
 module.exports = { CONTACTKENNYISSUESSTRING, CONTACTKENNYINFOSTRING, toCapitalCase, generateInvalidNameString, generateInvalidGenderedNickname,
 	generatePokemonAlreadyClaimedString, generateNoUserClaimString, generateUserClaimString,
-	generateUserAlreadyClaimedString, generateSuccessfulClaimString, generateViewClaimNoUserClaimString,
-	generateViewClaimUserHasClaimString, generateDBEditErrors, generateGenderedNickname,
+	generateUserAlreadyClaimedString, generateSuccessfulClaimString, generateViewClaimAlreadyClaimedString,
+	generateViewClaimNotClaimedString, generateDBEditErrors, generateGenderedNickname,
 	generateSuccessfulUpdateString, generateEarlyClaimChangeString, generateSuccessfulClaimChangeString,
 	generateSuccessfulRemovalString, generateCommandString, generateListString, sendEphemeralMessage, generateAllCommandInfoString,
 	generateRemovedClaimString, generateDirectionsCommandInfoString, generateClaimCommandInfoString, generateViewCommandInfoString,
 	generateEditCommandInfoString, generateChangeCommandInfoString, generateRemoveCommandInfoString, generatePokemonNameNotes,
-	generateInvalidCommandNameString };
+	generateInvalidCommandNameString, generateClaimsTableName, generateDatabaseErrorString, sendDeferredEphemeralMessage };

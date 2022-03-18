@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { getUserClaims, addClaimToDatabase, getNicknameFromInteraction } = require('../utils/database-utils');
+const { getUserClaims, addClaimToDatabase, getNicknameFromInteraction, NOCLAIMSSTRING,
+	generateDatabaseErrorString } = require('../utils/database-utils');
 const { generateNoUserClaimString, generateDBEditErrors, generateSuccessfulUpdateString,
-	toCapitalCase, sendEphemeralMessage } = require('../utils/string-utils');
+	toCapitalCase, sendDeferredEphemeralMessage } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -13,7 +14,7 @@ module.exports = {
 				.setDescription('If you wish to give one nickname for any gender of the pokemon')
 				.addStringOption(option =>
 					option
-						.setName('new-nickname')
+						.setName('nickname')
 						.setDescription('The new nickname for your pokemon')
 						.setRequired(true),
 				),
@@ -24,47 +25,56 @@ module.exports = {
 				.setDescription('If you wish to give different nickname depending on the gender of the pokemon')
 				.addStringOption(option =>
 					option
-						.setName('new-male-nickname')
+						.setName('male-nickname')
 						.setDescription('The new nickname for a MALE pokemon')
 						.setRequired(true),
 				)
 				.addStringOption(option =>
 					option
-						.setName('new-female-nickname')
+						.setName('female-nickname')
 						.setDescription('The new nickname for a FEMALE pokemon')
 						.setRequired(true),
 				),
 		),
 	async execute(interaction, isPermanent) {
-		const user = interaction.user.username;
+		interaction.deferReply({ ephemeral: true });
 
-		const userClaim = getUserClaims(user);
+		const user = interaction.user.username;
+		const serverName = interaction.guild.name;
+		const userClaim = await getUserClaims(user, serverName);
 		if (userClaim == undefined) {
-			return sendEphemeralMessage(interaction, generateNoUserClaimString(user));
+			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
+		}
+		else if (userClaim == NOCLAIMSSTRING) {
+			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+		}
+		else if (typeof userClaim == 'string' && userClaim.includes('ClaimsFormattingError')) {
+			return sendDeferredEphemeralMessage(interaction, userClaim);
 		}
 
-		// TODO: replace this once the database API is designed to parse the response
-		const claimedPokemon = ['blissey']; // something like userClaim.claimedPokemonList
+		const claimedPokemon = userClaim['claimed-pokemon'];
+		const nextChangeDate = new Date(Date.parse(userClaim['next-change-date']));
 
-		const nickname = getNicknameFromInteraction(interaction, claimedPokemon[0]);
+		const nickname = await getNicknameFromInteraction(interaction, claimedPokemon[0]);
 		if (nickname.includes('InvalidGenderedClaimError')) {
-			return sendEphemeralMessage(interaction, nickname);
+			return sendDeferredEphemeralMessage(interaction, nickname);
 		}
 
 		let errorClaims = [];
-		claimedPokemon.forEach(pokemon => {
-			if (!addClaimToDatabase(pokemon, user, nickname, isPermanent)) {
+		for (const index in claimedPokemon) {
+			const pokemon = claimedPokemon[index];
+			if (!(await addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent))) {
 				console.log('Error adding claim for ' + toCapitalCase(pokemon));
 				errorClaims += pokemon;
 			}
-		});
+		}
 
 		if (errorClaims.length > 0) {
-			return sendEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
+			return sendDeferredEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
 		}
 		else {
 			console.log('Nickname has been updated successfully');
-			return sendEphemeralMessage(interaction, generateSuccessfulUpdateString(user, claimedPokemon, nickname));
+			return sendDeferredEphemeralMessage(interaction, generateSuccessfulUpdateString(user, claimedPokemon, nickname));
 		}
 	},
 };
