@@ -153,10 +153,14 @@ function generateInvalidGenderedNickname(pokemon, genderAnomalyString) {
  * Generates the output string for when the user views a pokemon that has already been claimed
  * @param {string} user the username of the user calling the command
  * @param {string} pokemon the name of the pokemon
+ * @param {list of string} evoline the list of pokemon in the evolutionary line
+ * @param {string} username the username of the person who claimed it
+ * @param {string} nickname the nickname that the claimer chose
  * @returns the formatted string
  */
-function generateViewClaimAlreadyClaimedString(user, pokemon, evoline) {
-	return user + ', ' + toCapitalCase(pokemon) + ' has already been claimed. They have also already claimed ' + generateListString(evoline);
+function generateViewClaimAlreadyClaimedString(user, pokemon, evoline, username, nickname) {
+	return user + ', ' + toCapitalCase(pokemon) + ' has already been claimed by ' + username + ' with the nickname ' + nickname +
+	'. They have also claimed ' + generateListString(evoline);
 }
 
 /**
@@ -166,7 +170,8 @@ function generateViewClaimAlreadyClaimedString(user, pokemon, evoline) {
  * @returns the formatted string
  */
 function generateViewClaimNotClaimedString(user, pokemon, evoline) {
-	return user + ', ' + toCapitalCase(pokemon) + ' has not been claimed yet. If you wish to claim this pokemon, you will also claim ' + generateListString(evoline);
+	return user + ', ' + toCapitalCase(pokemon) + ' has not been claimed yet. If you wish to claim this pokemon, you will also claim ' +
+	generateListString(evoline);
 }
 
 /**

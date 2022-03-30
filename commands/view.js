@@ -48,7 +48,9 @@ module.exports = {
 
 			else if (pokemonClaim['username'] != 'UNDEFINED') {
 				console.log('Pokemon has already been claimed');
-				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(user, pokemon, evoline));
+				const username = pokemonClaim['username'];
+				const nickname = pokemonClaim['nickname'];
+				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(user, pokemon, evoline, username, nickname));
 			}
 			else {
 				console.log('Pokemon has not yet been claimed');

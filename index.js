@@ -28,10 +28,13 @@ client.on('interactionCreate', async interaction => {
 		return;
 	}
 
-	if (interaction.channel.name != 'nuzlocke-name-claim') {
+	console.log('Message sent in channel ' + interaction.channel.name);
+	if (!interaction.channel.name.includes('nuzlocke-name-claim')) {
+		console.log('Incorrectly formatted channel name.');
 		sendEphemeralMessage(interaction, 'WrongChannelError: Please use this command in the "nuzlocke-name-claim" channel only.');
 		return;
 	}
+	console.log('Channel name fits parameters. Continuing');
 
 	console.log('Server Name: ' + interaction.guild.name);
 	const rolePermissions = await canUserMakeClaim(interaction.member, interaction.guild.name);
