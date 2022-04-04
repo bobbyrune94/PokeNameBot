@@ -1,0 +1,8 @@
+SSH Into Instances: ssh -i "BotInstanceKeyPair.pem" ubuntu@ec2-34-216-82-37.us-west-2.compute.amazonaws.com
+
+List Process: ps -eaf
+Kill Process: kill [pid]
+
+Start Process: pm2 start index.js
+
+Check Logs: $HOME/.pm2/logs

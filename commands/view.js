@@ -75,6 +75,9 @@ module.exports = {
 			else {
 				const claimedPokemon = userClaim['claimed-pokemon'];
 				const nickname = userClaim['nickname'];
+				if (claimedPokemon == undefined || claimedPokemon.length == 0) {
+					return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+				}
 				return sendDeferredEphemeralMessage(interaction, generateUserClaimString(user, claimedPokemon, nickname));
 			}
 		}
