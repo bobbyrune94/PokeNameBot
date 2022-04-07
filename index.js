@@ -21,6 +21,7 @@ client.once('ready', () => {
 });
 
 client.on('interactionCreate', async interaction => {
+	console.log('Executing Command ------------------------------------------------------------------');
 	if (!interaction.isCommand()) {
 		if (!interaction.isSelectMenu()) return;
 		console.log('Select Menu Event Detected.');
@@ -56,6 +57,7 @@ client.on('interactionCreate', async interaction => {
 		console.error(error);
 		sendEphemeralMessage(interaction, 'There was an error while executing this command!');
 	}
+	console.log('Command Finished Executing ------------------------------------------------------------------');
 });
 
 client.login(token);

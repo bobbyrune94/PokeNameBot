@@ -15,6 +15,11 @@ function sendDeferredEphemeralMessage(interaction, string) {
 	interaction.editReply({
 		content: string,
 		ephemeral: true,
+	}).catch(err => {
+		interaction.followUp({
+			content: 'Error sending message: ' + err.toString(),
+			ephemeral: true,
+		});
 	});
 }
 
