@@ -16,8 +16,9 @@ function sendDeferredEphemeralMessage(interaction, string) {
 		content: string,
 		ephemeral: true,
 	}).catch(err => {
-		interaction.followUp({
-			content: 'Error sending message: ' + err.toString(),
+		console.log('Error sending original message: ' + err.toString());
+		interaction.reply({
+			content: string,
 			ephemeral: true,
 		});
 	});
