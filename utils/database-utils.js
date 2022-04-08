@@ -377,19 +377,39 @@ async function canUserMakeClaim(member, server) {
 	console.log('Checking if ' + member.user.username + ' has the appropriate roles to make a claim.');
 	const userRoles = member.roles.cache;
 
+	if (claimRoles['perma-claim-roles'].includes('@everyone')) {
+		console.log('Everyone is allowed to make permanent claims. Allowing user to make claims');
+		return [true, true];
+	}
+
+	if (claimRoles['claim-roles'].includes('@everyone')) {
+		console.log('Everyone is allowed to make a claim in this server.');
+		canClaimArray[0] = true;
+	}
+
 	// eslint-disable-next-line prefer-const
 	let canClaimArray = [false, false];
-	userRoles.each(role => {
-		console.log('Checking if ' + role.name + ' can make a claim in the system');
-		if (claimRoles['claim-roles'].includes(role.name)) {
-			console.log('User has ' + role.name + ' role, allowing them to make a claim in the system');
-			canClaimArray[0] = true;
+	for (const index in userRoles) {
+		const role = userRoles[index].name;
+		console.log('Checking if ' + role + ' can make a claim in the system');
+		// if user hasn't been determined to make a claim yet
+		if (!canClaimArray[0]) {
+			if (claimRoles['claim-roles'].includes(role)) {
+				console.log('User has ' + role + ' role, allowing them to make a claim in the system');
+				canClaimArray[0] = true;
+			}
 		}
-		if (claimRoles['perma-claim-roles'].includes(role.name)) {
-			console.log('User has ' + role.name + ' role, allowing them to make a permanent claim in the system');
-			canClaimArray[1] = true;
+
+		// if user hasn't been determined to make a permanent claim
+		if (!canClaimArray[1]) {
+			if (claimRoles['perma-claim-roles'].includes(role)) {
+				console.log('User has ' + role + ' role, allowing them to make a permanent claim in the system');
+				canClaimArray[1] = true;
+				canClaimArray[0] = true; // a permanent claim role allows them to make a claim
+				break;
+			}
 		}
-	});
+	}
 
 	return canClaimArray;
 }
