@@ -22,6 +22,7 @@ client.once('ready', () => {
 
 client.on('interactionCreate', async interaction => {
 	console.log('Executing Command ------------------------------------------------------------------');
+	console.log('Interaction ID: ' + interaction.id);
 	if (!interaction.isCommand()) {
 		if (!interaction.isSelectMenu()) return;
 		console.log('Select Menu Event Detected.');

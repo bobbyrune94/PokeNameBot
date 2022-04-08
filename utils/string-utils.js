@@ -12,6 +12,7 @@ function sendEphemeralMessage(interaction, string) {
 }
 
 function sendDeferredEphemeralMessage(interaction, string) {
+	console.log('Interaction ID: ' + interaction.id);
 	interaction.editReply({
 		content: string,
 		ephemeral: true,
