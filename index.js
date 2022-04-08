@@ -5,8 +5,10 @@ const { generateCommandString, sendEphemeralMessage } = require('./utils/string-
 const { canUserMakeClaim } = require('./utils/database-utils');
 const { handleDescriptionSelectMenu } = require('./utils/select-menu-utils');
 
-
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+
+const talkedRecently = new Set();
+const MESSAGECOOLDOWN = 30000; // 30 seconds
 
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -23,6 +25,18 @@ client.once('ready', () => {
 client.on('interactionCreate', async interaction => {
 	console.log('Executing Command ------------------------------------------------------------------');
 	console.log('Interaction ID: ' + interaction.id);
+	if (talkedRecently.has(interaction.user.id)) {
+		console.log(interaction.user.username + ' used a command within the cooldown');
+		sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait 30 Seconds Before Using Another Command');
+		return;
+	}
+	talkedRecently.add(interaction.user.id);
+
+	setTimeout(() => {
+		console.log(interaction.user.username + ' can now call another command.');
+		talkedRecently.delete(interaction.user.id);
+	}, MESSAGECOOLDOWN);
+
 	if (!interaction.isCommand()) {
 		if (!interaction.isSelectMenu()) return;
 		console.log('Select Menu Event Detected.');

@@ -28,7 +28,7 @@ module.exports = {
 	// eslint-disable-next-line no-unused-vars
 	async execute(interaction, isPermanent) {
 		interaction.deferReply({ ephemeral: true }).catch(err => {
-			console.err('Error Deferring Reploy: ' + err.toString());
+			console.error('Error Deferring Reploy: ' + err.toString());
 			interaction.reply('Error Deferring Reply');
 		});
 		const user = interaction.user.username;
