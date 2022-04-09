@@ -24,8 +24,8 @@ const TWOGENDEREDSTRING = 'two_genders';
 async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent, interactionId) {
 	const claimsTableName = generateClaimsTableName(serverName);
 
-	logMessage('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' in table ' + claimsTableName + ' as '
-	+ nickname + ' Next Date to Change Claim: ' + nextChangeDate.toDateString(), interactionId);
+	logMessage('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' in table ' + claimsTableName + ' as "'
+	+ nickname + '". Next Date to Change Claim: ' + nextChangeDate.toDateString(), interactionId);
 	isPermanent ? logMessage('Claim will be permanent', interactionId) : logMessage('Claim will not be permanent and deleted after 1 year', interactionId);
 	let successful = false;
 	await axios.post(
@@ -171,7 +171,7 @@ async function getUserClaims(user, serverName, interactionId) {
 				}
 			}
 			else if (statusCode == 404) {
-				logMessage('No Claim Found for ' + user, interactionId);
+				logMessage('No Claims Found for ' + user, interactionId);
 				userClaims = NOCLAIMSSTRING;
 			}
 			else {
@@ -547,9 +547,9 @@ async function didUserRemoveClaim(user, server, interactionId) {
 		return nextClaimDate;
 	}
 	logMessage('User made a claim that they removed more than 3 months ago. Removing claim from remove-claim table.', interactionId);
-	await removeEntryFromRemoveClaimTable(user, server);
+	await removeEntryFromRemoveClaimTable(user, server, interactionId);
 	return false;
 }
 
-module.exports = { addClaimToDatabase, removeClaimFromDatabase, getUserClaims, getPokemonClaim, canUserMakeClaim,
+module.exports = { addClaimToDatabase, removeClaimFromDatabase, getUserClaims, getPokemonClaim, canUserMakeClaim, NOCLAIMSSTRING,
 	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim, addEntryToRemoveClaimTable, INVALIDPOKEMONNAMESTRING };

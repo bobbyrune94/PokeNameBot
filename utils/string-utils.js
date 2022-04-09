@@ -76,7 +76,7 @@ function generateGenderedNickname(maleNickname, femaleNickname) {
  * @returns the formatted error string
  */
 function generateNoUserClaimString(user) {
-	return 'NoExistingClaimError: ' + user + ', you have not claimed a Pokemon yet. Use the "/claim" command to make your claim.';
+	return user + ', you have not claimed a Pokemon yet. Use the "/claim" command to make your claim.';
 }
 
 /**
@@ -274,7 +274,7 @@ function generateDBEditErrors(addErrors, removeErrors) {
  * @returns the formatted string
  */
 function generateRemovedClaimString(user, nextClaimDate) {
-	return user + ', you have removed a claim within the last three months. The next time you can claim a Pokemon is ' + nextClaimDate.toDateString();
+	return user + ', you have removed a claim within the last three months. The next time you can claim a Pokemon is ' + nextClaimDate;
 }
 
 /**

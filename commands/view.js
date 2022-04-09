@@ -66,9 +66,9 @@ module.exports = {
 			if (userClaim == undefined) {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}
-			else if (userClaim == NOCLAIMSSTRING) {
-				const nextClaimDate = await didUserRemoveClaim(user, serverName);
-				if (nextClaimDate != undefined) {
+			else if (userClaim === NOCLAIMSSTRING) {
+				const nextClaimDate = await didUserRemoveClaim(user, serverName, interaction.id);
+				if (nextClaimDate != undefined && nextClaimDate != false) {
 					return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(user, nextClaimDate));
 				}
 				return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));

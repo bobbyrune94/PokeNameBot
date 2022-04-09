@@ -16,7 +16,8 @@ function addMonths(date, months, interactionId) {
 		date.setDate(0);
 	}
 	logMessage('New Date: ' + date.toDateString(), interactionId);
-	return date;
+	return new Date(Date.now());
+	// return date; //TODO: change this back after beta test
 }
 
 module.exports = { addMonths };
