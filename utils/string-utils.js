@@ -12,16 +12,9 @@ function sendEphemeralMessage(interaction, string) {
 }
 
 function sendDeferredEphemeralMessage(interaction, string) {
-	console.log('Interaction ID: ' + interaction.id);
 	interaction.editReply({
 		content: string,
 		ephemeral: true,
-	}).catch(err => {
-		console.log('Error sending original message: ' + err.toString());
-		interaction.reply({
-			content: string,
-			ephemeral: true,
-		});
 	});
 }
 
@@ -166,8 +159,8 @@ function generateInvalidGenderedNickname(pokemon, genderAnomalyString) {
  * @returns the formatted string
  */
 function generateViewClaimAlreadyClaimedString(user, pokemon, evoline, username, nickname) {
-	return user + ', ' + toCapitalCase(pokemon) + ' has already been claimed by ' + username + ' with the nickname ' + nickname +
-	'. They have also claimed ' + generateListString(evoline);
+	return user + ', ' + toCapitalCase(pokemon) + ' has already been claimed by ' + username + ' with the nickname "' + nickname +
+	'". They have also claimed ' + generateListString(evoline);
 }
 
 /**

@@ -1,3 +1,4 @@
+const { logMessage } = require('./logging-utils');
 const { sendEphemeralMessage, generateAllCommandInfoString, generateDirectionsCommandInfoString, generateClaimCommandInfoString,
 	generateViewCommandInfoString, generateEditCommandInfoString, generateChangeCommandInfoString, generateRemoveCommandInfoString,
 	generateInvalidCommandNameString, generatePokemonNameNotes } = require('./string-utils');
@@ -5,35 +6,35 @@ const { sendEphemeralMessage, generateAllCommandInfoString, generateDirectionsCo
 function handleDescriptionSelectMenu(interaction) {
 	switch (interaction.values[0]) {
 	case 'description':
-		console.log('Outputting usage information for the description command');
+		logMessage('Outputting usage information for the description command', interaction.id);
 		sendEphemeralMessage(interaction, generateDirectionsCommandInfoString());
 		break;
 	case 'claim':
-		console.log('Outputting usage information for the claim command');
+		logMessage('Outputting usage information for the claim command', interaction.id);
 		sendEphemeralMessage(interaction, generateClaimCommandInfoString() + '\n' + generatePokemonNameNotes());
 		break;
 	case 'view':
-		console.log('Outputting usage information for the view command');
+		logMessage('Outputting usage information for the view command', interaction.id);
 		sendEphemeralMessage(interaction, generateViewCommandInfoString() + '\n' + generatePokemonNameNotes());
 		break;
 	case 'edit':
-		console.log('Outputting usage information for the edit command');
+		logMessage('Outputting usage information for the edit command', interaction.id);
 		sendEphemeralMessage(interaction, generateEditCommandInfoString());
 		break;
 	case 'change':
-		console.log('Outputting usage information for the change command');
+		logMessage('Outputting usage information for the change command', interaction.id);
 		sendEphemeralMessage(interaction, generateChangeCommandInfoString() + '\n' + generatePokemonNameNotes());
 		break;
 	case 'remove':
-		console.log('Outputting usage information for the remove command');
+		logMessage('Outputting usage information for the remove command', interaction.id);
 		sendEphemeralMessage(interaction, generateRemoveCommandInfoString());
 		break;
 	case 'showall':
-		console.log('Outputting usage information for the all commands');
+		logMessage('Outputting usage information for the all commands', interaction.id);
 		sendEphemeralMessage(interaction, generateAllCommandInfoString());
 		break;
 	default:
-		console.error('InvalidSelectionError: Unknown Command String Selected');
+		logMessage('InvalidSelectionError: Unknown Command String Selected', interaction.id);
 		sendEphemeralMessage(interaction, generateInvalidCommandNameString());
 		break;
 	}

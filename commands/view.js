@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getPokemonClaim, getUserClaims, NOCLAIMSSTRING, didUserRemoveClaim, INVALIDPOKEMONNAMESTRING,
 	getPokemonEvolutionaryLine } = require('../utils/database-utils');
+const { logMessage } = require('../utils/logging-utils');
 const { generateInvalidNameString, generateViewClaimAlreadyClaimedString, generateViewClaimNotClaimedString,
 	generateNoUserClaimString, generateUserClaimString, sendDeferredEphemeralMessage,
 	generateRemovedClaimString, generateDatabaseErrorString } = require('../utils/string-utils');
@@ -28,7 +29,7 @@ module.exports = {
 	// eslint-disable-next-line no-unused-vars
 	async execute(interaction, isPermanent) {
 		interaction.deferReply({ ephemeral: true }).catch(err => {
-			console.error('Error Deferring Reploy: ' + err.toString());
+			logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
 			interaction.reply('Error Deferring Reply');
 		});
 		const user = interaction.user.username;
@@ -36,7 +37,7 @@ module.exports = {
 
 		if (interaction.options.getSubcommand() === 'pokemon') {
 			const pokemon = interaction.options.getString('pokemon').toLowerCase();
-			const pokemonClaim = await getPokemonClaim(pokemon, serverName);
+			const pokemonClaim = await getPokemonClaim(pokemon, serverName, interaction.id);
 			if (pokemonClaim == INVALIDPOKEMONNAMESTRING) {
 				return sendDeferredEphemeralMessage(interaction, generateInvalidNameString(pokemon));
 			}
@@ -44,24 +45,24 @@ module.exports = {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}
 
-			const evoline = await getPokemonEvolutionaryLine(pokemon);
+			const evoline = await getPokemonEvolutionaryLine(pokemon, interaction.id);
 			if (evoline == undefined) {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}
 
 			else if (pokemonClaim['username'] != 'UNDEFINED') {
-				console.log('Pokemon has already been claimed');
+				logMessage('Pokemon has already been claimed', interaction.id);
 				const username = pokemonClaim['username'];
 				const nickname = pokemonClaim['nickname'];
 				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(user, pokemon, evoline, username, nickname));
 			}
 			else {
-				console.log('Pokemon has not yet been claimed');
+				logMessage('Pokemon has not yet been claimed', interaction.id);
 				return sendDeferredEphemeralMessage(interaction, generateViewClaimNotClaimedString(user, pokemon, evoline));
 			}
 		}
 		else if (interaction.options.getSubcommand() === 'claim') {
-			const userClaim = await getUserClaims(user, serverName);
+			const userClaim = await getUserClaims(user, serverName, interaction.id);
 			if (userClaim == undefined) {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}

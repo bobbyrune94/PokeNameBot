@@ -3,6 +3,7 @@ const { getUserClaims, addClaimToDatabase, getPokemonClaim, removeClaimFromDatab
 	INVALIDPOKEMONNAMESTRING, getPokemonEvolutionaryLine, getNicknameFromInteraction,
 	NOCLAIMSSTRING } = require('../utils/database-utils');
 const { addMonths } = require('../utils/date-utils');
+const { logMessage } = require('../utils/logging-utils');
 const { toCapitalCase, generateInvalidNameString, generateNoUserClaimString, generateDBEditErrors,
 	generatePokemonAlreadyClaimedString, generateEarlyClaimChangeString,
 	generateSuccessfulClaimChangeString, sendDeferredEphemeralMessage, generateDatabaseErrorString } = require('../utils/string-utils');
@@ -58,7 +59,7 @@ module.exports = {
 		const serverName = interaction.guild.name;
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
 
-		const pokemonClaim = await getPokemonClaim(pokemon_name, serverName);
+		const pokemonClaim = await getPokemonClaim(pokemon_name, serverName, interaction.id);
 		if (pokemonClaim == INVALIDPOKEMONNAMESTRING) {
 			return sendDeferredEphemeralMessage(interaction, generateInvalidNameString(pokemon_name));
 		}
@@ -69,7 +70,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
 		}
 
-		const userClaim = await getUserClaims(user, serverName);
+		const userClaim = await getUserClaims(user, serverName, interaction.id);
 		if (userClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
@@ -84,26 +85,26 @@ module.exports = {
 		const oldClaims = userClaim['claimed-pokemon'];
 		const changeClaimDate = new Date(Date.parse(userClaim['next-change-date']));
 
-		console.log('Checking if the change occurred too early. Current date ' + new Date(Date.now()) + ' must be after ' + changeClaimDate.toDateString());
+		logMessage('Checking if the change occurred too early. Current date ' + new Date(Date.now()) + ' must be after ' + changeClaimDate.toDateString(), interaction.id);
 		if (new Date(Date.now()) < changeClaimDate) {
-			console.log('Claim change was too early');
+			logMessage('Claim change was too early', interaction.id);
 			return sendDeferredEphemeralMessage(interaction, generateEarlyClaimChangeString(user, changeClaimDate));
 		}
-		console.log('Claim is past 3 month change threshold. Continuing');
+		logMessage('Claim is past 3 month change threshold. Continuing', interaction.id);
 
 		const newNickname = await getNicknameFromInteraction(interaction, pokemon_name);
 		if (newNickname.includes('InvalidGenderedClaimError')) {
 			return sendDeferredEphemeralMessage(interaction, newNickname);
 		}
 
-		const newEvoLine = await getPokemonEvolutionaryLine(pokemon_name);
-		const newChangeDate = addMonths(new Date(Date.now()), 3);
+		const newEvoLine = await getPokemonEvolutionaryLine(pokemon_name, interaction.id);
+		const newChangeDate = addMonths(new Date(Date.now()), 3, interaction.id);
 
 		let addClaimErrors = [];
 		for (const index in newEvoLine) {
 			const pokemon = newEvoLine[index];
-			if (!(await addClaimToDatabase(serverName, pokemon, user, newNickname, newChangeDate, isPermanent))) {
-				console.log('Error adding claim for ' + toCapitalCase(pokemon));
+			if (!(await addClaimToDatabase(serverName, pokemon, user, newNickname, newChangeDate, isPermanent, interaction.id))) {
+				logMessage('Error adding claim for ' + toCapitalCase(pokemon), interaction.id);
 				addClaimErrors += pokemon;
 			}
 		}
@@ -111,8 +112,8 @@ module.exports = {
 		let removeClaimErrors = [];
 		for (const index in oldClaims) {
 			const pokemon = oldClaims[index];
-			if (!removeClaimFromDatabase(pokemon, serverName)) {
-				console.log('Error removing claim for ' + toCapitalCase(pokemon));
+			if (!removeClaimFromDatabase(pokemon, serverName, interaction.id)) {
+				logMessage('Error removing claim for ' + toCapitalCase(pokemon), interaction.id);
 				removeClaimErrors += pokemon;
 			}
 		}
@@ -121,7 +122,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDBEditErrors(addClaimErrors, removeClaimErrors));
 		}
 		else {
-			console.log('Claim has been changed successfully.');
+			logMessage('Claim has been changed successfully.', interaction.id);
 			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimChangeString(user, newEvoLine, newNickname, oldClaims, oldNickname));
 		}
 	},

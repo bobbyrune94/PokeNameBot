@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, removeClaimFromDatabase, addEntryToRemoveClaimTable, NOCLAIMSSTRING,
 	generateDatabaseErrorString } = require('../utils/database-utils');
+const { logMessage } = require('../utils/logging-utils');
 const { generateNoUserClaimString, generateDBEditErrors, generateSuccessfulRemovalString,
 	toCapitalCase, sendDeferredEphemeralMessage } = require('../utils/string-utils');
 
@@ -14,7 +15,7 @@ module.exports = {
 		const user = interaction.user.username;
 		const serverName = interaction.guild.name;
 
-		const userClaim = await getUserClaims(user, serverName);
+		const userClaim = await getUserClaims(user, serverName, interaction.id);
 		if (userClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
@@ -31,21 +32,21 @@ module.exports = {
 		let errorClaims = [];
 		for (const index in claimedPokemon) {
 			const pokemon = claimedPokemon[index];
-			if (!(await removeClaimFromDatabase(pokemon, serverName))) {
-				console.log('Error removing claim for ' + toCapitalCase(pokemon));
+			if (!(await removeClaimFromDatabase(pokemon, serverName, interaction.id))) {
+				logMessage('Error removing claim for ' + toCapitalCase(pokemon), interaction.id);
 				errorClaims += pokemon;
 			}
 		}
 
-		if (!(await addEntryToRemoveClaimTable(user, serverName, nextChangeDate))) {
-			console.error('Error removing ' + user + '\'s entry from remove-claims database');
+		if (!(await addEntryToRemoveClaimTable(user, serverName, nextChangeDate, interaction.id))) {
+			logMessage('Error removing ' + user + '\'s entry from remove-claims database', interaction.id);
 		}
 
 		if (errorClaims.length > 0) {
 			return sendDeferredEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
 		}
 		else {
-			console.log('Claims removed successfully');
+			logMessage('Claims removed successfully', interaction.id);
 			return sendDeferredEphemeralMessage(interaction, generateSuccessfulRemovalString(user, claimedPokemon, nextChangeDate));
 		}
 	},

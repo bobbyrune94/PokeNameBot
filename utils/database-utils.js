@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 const axios = require('axios');
+const { logMessage } = require('./logging-utils.js');
 const { toCapitalCase, generateInvalidGenderedNickname, generateGenderedNickname, generateClaimsTableName,
 	CONTACTKENNYISSUESSTRING } = require('./string-utils.js');
 
@@ -17,14 +18,15 @@ const TWOGENDEREDSTRING = 'two_genders';
  * @param {string} user the user that claimed the pokemon
  * @param {string} nickname the nickname for the pokemon
  * @param {boolean} isPermanent whether the claim is permament
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns whether the database edit was successful
  */
-async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent) {
+async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent, interactionId) {
 	const claimsTableName = generateClaimsTableName(serverName);
 
-	console.log('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' in table ' + claimsTableName + ' as '
-	+ nickname + ' Next Date to Change Claim: ' + nextChangeDate.toDateString());
-	isPermanent ? console.log('Claim will be permanent') : console.log('Claim will not be permanent and deleted after 1 year');
+	logMessage('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' in table ' + claimsTableName + ' as '
+	+ nickname + ' Next Date to Change Claim: ' + nextChangeDate.toDateString(), interactionId);
+	isPermanent ? logMessage('Claim will be permanent', interactionId) : logMessage('Claim will not be permanent and deleted after 1 year', interactionId);
 	let successful = false;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesaddclaim',
@@ -39,15 +41,15 @@ async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChang
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Successfully added claim for ' + toCapitalCase(pokemon) + ' into ' + claimsTableName + ' database.');
+				logMessage('Successfully added claim for ' + toCapitalCase(pokemon) + ' into ' + claimsTableName + ' database.', interactionId);
 				successful = true;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return successful;
 }
@@ -56,10 +58,12 @@ async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChang
  * Edits the claims database to remove the claim from the pokemon.
  * Keeps the database entry, but clears the user, nickname, and timestamp fields
  * @param {string} pokemon the pokemon to remove the claim from
+ * @param {string} serverName the name of the discord server the command was called in
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns whether the database edit was successful
  */
-async function removeClaimFromDatabase(pokemon, serverName) {
-	console.log('Removing claim from ' + toCapitalCase(pokemon));
+async function removeClaimFromDatabase(pokemon, serverName, interactionId) {
+	logMessage('Removing claim from ' + toCapitalCase(pokemon), interactionId);
 
 	const claimsTableName = generateClaimsTableName(serverName);
 	let successful = false;
@@ -72,15 +76,15 @@ async function removeClaimFromDatabase(pokemon, serverName) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Successfully removed claim for ' + toCapitalCase(pokemon) + ' in ' + claimsTableName + ' database.');
+				logMessage('Successfully removed claim for ' + toCapitalCase(pokemon) + ' in ' + claimsTableName + ' database.', interactionId);
 				successful = true;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return successful;
 }
@@ -137,11 +141,13 @@ function formatUserClaims(user, response) {
 /**
  * Queries the claims database to get all of the claims that a user has placed
  * @param {string} user the user to get the claims for
+ * @param {string} serverName the name of the discord server the user called the command in
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns all claims that the user has made formatted as a JSON object
  */
-async function getUserClaims(user, serverName) {
+async function getUserClaims(user, serverName, interactionId) {
 	const claimsTableName = generateClaimsTableName(serverName);
-	console.log('Getting all Claims for ' + user + ' in ' + claimsTableName);
+	logMessage('Getting all Claims for ' + user + ' in ' + claimsTableName, interactionId);
 	let userClaims = undefined;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesgetuserclaim',
@@ -152,28 +158,28 @@ async function getUserClaims(user, serverName) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Got User Claim: ' + JSON.stringify(result['data']['body']));
+				logMessage('Got User Claim: ' + JSON.stringify(result['data']['body']), interactionId);
 				const formattedClaims = formatUserClaims(user, result['data']['body']);
 				if (formattedClaims == ERRORCLAIMSTRING) {
-					console.log('Error formatting user claims. Some of the fields may be mismatched');
+					logMessage('Error formatting user claims. Some of the fields may be mismatched', interactionId);
 					userClaims = 'ClaimsFormattingError: Error formatting user claims ' + JSON.stringify(result['data']['body']) +
 					' Please contact a moderator to resolve this issue. ' + CONTACTKENNYISSUESSTRING;
 				}
 				else {
-					console.log('Successfully formatted user claims into following object: ' + JSON.stringify(formattedClaims));
+					logMessage('Successfully formatted user claims into following object: ' + JSON.stringify(formattedClaims), interactionId);
 					userClaims = formattedClaims;
 				}
 			}
 			else if (statusCode == 404) {
-				console.log('No Claim Found for ' + user);
+				logMessage('No Claim Found for ' + user, interactionId);
 				userClaims = NOCLAIMSSTRING;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return userClaims;
 }
@@ -181,11 +187,13 @@ async function getUserClaims(user, serverName) {
 /**
  * Queries the claims database to get the claim data for a certain pokemon
  * @param {string} pokemon the pokemon to get claim data for
+ * @param {string} serverName the name of the discord server the command was called in
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns the claim data for the associated pokemon
  */
-async function getPokemonClaim(pokemon, serverName) {
+async function getPokemonClaim(pokemon, serverName, interactionId) {
 	const claimsTableName = generateClaimsTableName(serverName);
-	console.log('Getting claim for ' + toCapitalCase(pokemon));
+	logMessage('Getting claim for ' + toCapitalCase(pokemon), interactionId);
 	let pokemonClaim = undefined;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesgetpokemonclaim',
@@ -196,19 +204,19 @@ async function getPokemonClaim(pokemon, serverName) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Got Pokemon Claim: ' + JSON.stringify(result['data']['body']));
+				logMessage('Got Pokemon Claim: ' + JSON.stringify(result['data']['body']), interactionId);
 				pokemonClaim = result['data']['body'];
 			}
 			else if (statusCode == 404) {
-				console.log('Invalid Pokemon Name');
+				logMessage('Invalid Pokemon Name', interactionId);
 				pokemonClaim = INVALIDPOKEMONNAMESTRING;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return pokemonClaim;
 }
@@ -216,13 +224,14 @@ async function getPokemonClaim(pokemon, serverName) {
 /**
  * Queries the evo-line database to get the evolutionary line for the given pokemon
  * @param {string} pokemon the pokemon name to get the evolutionary line to
+ * @param {string} interactionId the id of the interaction that called this function. Used for logging purposes
  * @returns the list of pokemon in the argument's evolutionary line,
  * UndefinedPokemon if the pokemon doesn't exist,
  * or undefined if there was an error
  */
-async function getPokemonEvolutionaryLine(pokemon) {
+async function getPokemonEvolutionaryLine(pokemon, interactionId) {
 	// TODO: replace with API query to evo-lines database
-	console.log('Getting the evolutionary line for ' + pokemon);
+	logMessage('Getting the evolutionary line for ' + pokemon, interactionId);
 
 	let evoline = undefined;
 	await axios.post(
@@ -233,19 +242,19 @@ async function getPokemonEvolutionaryLine(pokemon) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Database Evolution Line: ' + JSON.stringify(result['data']['body']));
+				logMessage('Database Evolution Line: ' + JSON.stringify(result['data']['body']), interactionId);
 				evoline = result['data']['body'];
 			}
 			else if (statusCode == 404) {
-				console.log('Invalid pokemon name');
+				logMessage('Invalid pokemon name', interactionId);
 				evoline = INVALIDPOKEMONNAMESTRING;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return evoline;
 }
@@ -254,14 +263,15 @@ async function getPokemonEvolutionaryLine(pokemon) {
  * Queries the gender-anomaly database to check if the given pokemon is a gender anomaly
  * Gender anomalies include all pokemon who are genderless, only males, and only females
  * @param {string} pokemon the pokemon to check for
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns the string representation of the pokemon's gender situation
  * 'genderless', 'only_male', or 'only_female' if there is an anomaly
  * 'two_gendered' if the pokemon can be male or female
  * undefined if there was an issue
  */
-async function isGenderAnomalyPokemon(pokemon) {
+async function isGenderAnomalyPokemon(pokemon, interactionId) {
 	// TODO: replace with API query to gender-anomalies database
-	console.log('Checking if ' + pokemon + ' is a gender anomaly');
+	logMessage('Checking if ' + pokemon + ' is a gender anomaly', interactionId);
 
 	let anomaly = undefined;
 	await axios.post(
@@ -272,19 +282,19 @@ async function isGenderAnomalyPokemon(pokemon) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Claim Roles: ' + JSON.stringify(result['data']['body']));
+				logMessage('Claim Roles: ' + JSON.stringify(result['data']['body']), interactionId);
 				anomaly = result['data']['body'];
 			}
 			else if (statusCode == 404) {
-				console.log('Pokemon Has Two Genders');
+				logMessage('Pokemon Has Two Genders', interactionId);
 				anomaly = TWOGENDEREDSTRING;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return anomaly;
 }
@@ -297,14 +307,14 @@ async function isGenderAnomalyPokemon(pokemon) {
  * @returns the properly formatted nickname or the InvalidGenderedClaimError message
  */
 async function getNicknameFromInteraction(interaction, pokemon) {
-	console.log('Getting Nickname for ' + toCapitalCase(pokemon));
+	logMessage('Getting Nickname for ' + toCapitalCase(pokemon), interaction.id);
 	if (interaction.options.getSubcommand() === 'default') {
 		const nickname = interaction.options.getString('nickname');
-		console.log('Got nickname for ' + toCapitalCase(pokemon) + ' as ' + nickname);
+		logMessage('Got nickname for ' + toCapitalCase(pokemon) + ' as ' + nickname, interaction.id);
 		return nickname;
 	}
 	else if (interaction.options.getSubcommand() === 'gendered') {
-		const anomalyString = await isGenderAnomalyPokemon(pokemon);
+		const anomalyString = await isGenderAnomalyPokemon(pokemon, interaction.id);
 		if (anomalyString != TWOGENDEREDSTRING) {
 			return generateInvalidGenderedNickname(pokemon, anomalyString);
 		}
@@ -313,7 +323,7 @@ async function getNicknameFromInteraction(interaction, pokemon) {
 		const femaleNickname = interaction.options.getString('female-nickname');
 
 		const formattedGenderNicknames = generateGenderedNickname(maleNickname, femaleNickname);
-		console.log('Generated the formatted string for the gender nicknames for ' + toCapitalCase(pokemon) + ': ' + formattedGenderNicknames);
+		logMessage('Generated the formatted string for the gender nicknames for ' + toCapitalCase(pokemon) + ': ' + formattedGenderNicknames, interaction.id);
 
 		return formattedGenderNicknames;
 	}
@@ -325,10 +335,11 @@ async function getNicknameFromInteraction(interaction, pokemon) {
  * claimRoles represents the roles that are allowed to make claims. Claims, be default, will clear after 1 year. An empty array represents that anyone can make a claim
  * permanentClaimRoles represent those roles who can make permanent claims that won't clear after 1 year. An empty array represents that all claims are permanent
  * @param {string} server the discord server name
+ * @param {string} interactionId the id for the interaction that called this function. Used for logging purposes
  * @returns a JSON object with 'claim-roles' and 'perma-claim-roles' as fields with their associated lists of roles
  */
-async function getClaimableRoles(server) {
-	console.log('Getting claimable roles for server ' + server);
+async function getClaimableRoles(server, interactionId) {
+	logMessage('Getting claimable roles for server ' + server, interactionId);
 	let claimRoles = undefined;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimrolestableget',
@@ -338,21 +349,21 @@ async function getClaimableRoles(server) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Claim Roles: ' + JSON.stringify(result['data']['body']));
+				logMessage('Claim Roles: ' + JSON.stringify(result['data']['body']), interactionId);
 				claimRoles = result['data']['body'];
 			}
 			else if (statusCode == 404) {
-				console.log('Invalid Server Name');
+				logMessage('Invalid Server Name', interactionId);
 				evoline = INVALIDSERVERNAME;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
-	console.log('Retrieved claimable roles for server.');
+	logMessage('Retrieved claimable roles for server.', interactionId);
 	return claimRoles;
 }
 
@@ -360,30 +371,31 @@ async function getClaimableRoles(server) {
  * Checks if the user that sent a message has the roles necessary to make a claim or a permanent claim
  * @param {Member} member the member executing a command
  * @param {string} server the name of the discord server
+ * @param {string} interactionId the id of the interaction that is being checked. Used for logging purposes
  * @returns a two-element boolean array where the first element represents whether the user can make a claim
  * and the second element represents whether the claim will be permanent.
  */
-async function canUserMakeClaim(member, server) {
-	const claimRoles = await getClaimableRoles(server);
+async function canUserMakeClaim(member, server, interactionId) {
+	const claimRoles = await getClaimableRoles(server, interactionId);
 
 	if (claimRoles == INVALIDSERVERNAME) {
-		console.error('INVALIDSERVERERROR: Server has not been onboarded to system yet');
+		logMessage('INVALIDSERVERERROR: Server has not been onboarded to system yet', interactionId);
 		return [false, false];
 	}
 	else if (claimRoles == undefined) {
 		return [false, false];
 	}
 
-	console.log('Checking if ' + member.user.username + ' has the appropriate roles to make a claim.');
+	logMessage('Checking if ' + member.user.username + ' has the appropriate roles to make a claim.', interactionId);
 	const userRoles = member.roles.cache;
 
 	if (claimRoles['perma-claim-roles'].includes('@everyone')) {
-		console.log('Everyone is allowed to make permanent claims. Allowing user to make claims');
+		logMessage('Everyone is allowed to make permanent claims. Allowing user to make claims', interactionId);
 		return [true, true];
 	}
 
 	if (claimRoles['claim-roles'].includes('@everyone')) {
-		console.log('Everyone is allowed to make a claim in this server.');
+		logMessage('Everyone is allowed to make a claim in this server.', interactionId);
 		canClaimArray[0] = true;
 	}
 
@@ -391,11 +403,11 @@ async function canUserMakeClaim(member, server) {
 	let canClaimArray = [false, false];
 	for (const index in userRoles) {
 		const role = userRoles[index].name;
-		console.log('Checking if ' + role + ' can make a claim in the system');
+		logMessage('Checking if ' + role + ' can make a claim in the system', interactionId);
 		// if user hasn't been determined to make a claim yet
 		if (!canClaimArray[0]) {
 			if (claimRoles['claim-roles'].includes(role)) {
-				console.log('User has ' + role + ' role, allowing them to make a claim in the system');
+				logMessage('User has ' + role + ' role, allowing them to make a claim in the system', interactionId);
 				canClaimArray[0] = true;
 			}
 		}
@@ -403,7 +415,7 @@ async function canUserMakeClaim(member, server) {
 		// if user hasn't been determined to make a permanent claim
 		if (!canClaimArray[1]) {
 			if (claimRoles['perma-claim-roles'].includes(role)) {
-				console.log('User has ' + role + ' role, allowing them to make a permanent claim in the system');
+				logMessage('User has ' + role + ' role, allowing them to make a permanent claim in the system', interactionId);
 				canClaimArray[1] = true;
 				canClaimArray[0] = true; // a permanent claim role allows them to make a claim
 				break;
@@ -419,10 +431,11 @@ async function canUserMakeClaim(member, server) {
  * @param {string} user the username of the person removing their claim
  * @param {string} server the name of the discord server the command was executed in
  * @param {Date} nextClaimDate the next available date the user can make a claim
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns true if the entry was added, false if there was an error
  */
-async function addEntryToRemoveClaimTable(user, server, nextClaimDate) {
-	console.log('Adding ' + user + '\'s removed claim in the ' + server + ' to the database.');
+async function addEntryToRemoveClaimTable(user, server, nextClaimDate, interactionId) {
+	logMessage('Adding ' + user + '\'s removed claim in the ' + server + ' to the database.', interactionId);
 	let successful = false;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableadd',
@@ -434,15 +447,15 @@ async function addEntryToRemoveClaimTable(user, server, nextClaimDate) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Entry has been added. The next time you can claim is ' + nextClaimDate.toDateString());
+				logMessage('Entry has been added. The next time you can claim is ' + nextClaimDate.toDateString(), interactionId);
 				successful = true;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
 	return successful;
 }
@@ -451,13 +464,32 @@ async function addEntryToRemoveClaimTable(user, server, nextClaimDate) {
  * Removes an entry from the remove-claim table. This is most likely due to the next-claim date expiring
  * @param {string} user the username of the person who removed their claim
  * @param {string} server the name of the discord server the command was executed in
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns true if the entry was successfully removed, false if there was an error
  */
-async function removeEntryFromRemoveClaimTable(user, server) {
-	console.log('Removing entry in remove-claims database for ' + user + ' in discord server ' + server);
-	// TODO: remove entry from the remove-claims database
-	console.log('Entry successfully removed');
-	return true;
+async function removeEntryFromRemoveClaimTable(user, server, interactionId) {
+	logMessage('Removing entry in remove-claims database for ' + user + ' in discord server ' + server, interactionId);
+	let successful = false;
+	await axios.post(
+		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableremove',
+		{
+			'username': user,
+			'server-name': server,
+		})
+		.then(result => {
+			const statusCode = result['data']['statusCode'];
+			if (statusCode == 200) {
+				logMessage('Removed-Claims entry has been removed. ' + user + ' can now claim another pokemon.', interactionId);
+				successful = true;
+			}
+			else {
+				logMessage(result['data']['body'], interactionId);
+			}
+		})
+		.catch(error => {
+			logMessage(error, interactionId);
+		});
+	return successful;
 }
 
 /**
@@ -466,12 +498,13 @@ async function removeEntryFromRemoveClaimTable(user, server) {
  * This is to prevent people from removing claims and immediately re-claiming something
  * @param {string} user the username of the message sender
  * @param {string} server the name of the server
+ * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns the next available claim date if the user made a claim within the last three months
  * false if the user can make a claim now (either no entry or entry > 3 months old)
  * undefined if there was an error
  */
-async function didUserRemoveClaim(user, server) {
-	console.log('Checking Remove Claims Database for ' + user + ' from ' + server);
+async function didUserRemoveClaim(user, server, interactionId) {
+	logMessage('Checking Remove Claims Database for ' + user + ' from ' + server, interactionId);
 
 	let nextClaimDate = undefined;
 	await axios.post(
@@ -483,37 +516,37 @@ async function didUserRemoveClaim(user, server) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				console.log('Remove-Claim Data: ' + JSON.stringify(result['data']['body']));
+				logMessage('Remove-Claim Data: ' + JSON.stringify(result['data']['body']), interactionId);
 				nextClaimDate = result['data']['body'];
 			}
 			else if (statusCode == 404) {
-				console.log('No Remove-Claim Data Found');
+				logMessage('No Remove-Claim Data Found', interactionId);
 				nextClaimDate = NOREMOVECLAIMDATA;
 			}
 			else {
-				console.log(result['data']['body']);
+				logMessage(result['data']['body'], interactionId);
 			}
 		})
 		.catch(error => {
-			console.log(error);
+			logMessage(error, interactionId);
 		});
-	console.log('Retrieved remove claim data');
+	logMessage('Retrieved remove claim data', interactionId);
 
 	if (nextClaimDate == NOREMOVECLAIMDATA) {
-		console.log('No entry found in remove-claims table');
+		logMessage('No entry found in remove-claims table', interactionId);
 		return false;
 	}
 	if (nextClaimDate == undefined) {
-		console.log('Unknown ddb error occurred');
+		logMessage('Unknown ddb error occurred', interactionId);
 		return undefined;
 	}
 
 	const returnedDate = new Date(nextClaimDate);
 	if (returnedDate > Date.now()) {
-		console.log('User made a claim within the past 3 months. The next available claim date is ' + returnedDate.toDateString());
+		logMessage('User made a claim within the past 3 months. The next available claim date is ' + returnedDate.toDateString(), interactionId);
 		return nextClaimDate;
 	}
-	console.log('User made a claim that they removed more than 3 months ago. Removing claim from remove-claim table.');
+	logMessage('User made a claim that they removed more than 3 months ago. Removing claim from remove-claim table.', interactionId);
 	await removeEntryFromRemoveClaimTable(user, server);
 	return false;
 }

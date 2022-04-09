@@ -3,6 +3,7 @@ const { getUserClaims, addClaimToDatabase, getPokemonClaim,
 	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim,
 	INVALIDPOKEMONNAMESTRING } = require('../utils/database-utils');
 const { addMonths } = require('../utils/date-utils');
+const { logMessage } = require('../utils/logging-utils');
 const { toCapitalCase, generateInvalidNameString, generateUserAlreadyClaimedString, generateDBEditErrors,
 	generatePokemonAlreadyClaimedString, generateSuccessfulClaimString, sendDeferredEphemeralMessage,
 	generateRemovedClaimString, generateDatabaseErrorString } = require('../utils/string-utils');
@@ -58,12 +59,12 @@ module.exports = {
 		const serverName = interaction.guild.name;
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
 
-		const userClaim = await getUserClaims(user, interaction.guild.name);
+		const userClaim = await getUserClaims(user, interaction.guild.name, interaction.id);
 		if (userClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 		else if (typeof userClaim == 'object') {
-			console.log('User claim found, unable to make claim');
+			logMessage('User claim found, unable to make claim', interaction.id);
 			const nextChangeDate = new Date(userClaim['next-change-date']);
 			return sendDeferredEphemeralMessage(interaction, generateUserAlreadyClaimedString(user, nextChangeDate));
 		}
@@ -71,7 +72,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
 		}
 
-		const nextClaimDate = await didUserRemoveClaim(user, serverName);
+		const nextClaimDate = await didUserRemoveClaim(user, serverName, interaction.id);
 		if (nextClaimDate == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
@@ -79,7 +80,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(user, new Date(nextClaimDate)));
 		}
 
-		const pokemonClaim = await getPokemonClaim(pokemon_name, interaction.guild.name);
+		const pokemonClaim = await getPokemonClaim(pokemon_name, interaction.guild.name, interaction.id);
 		if (pokemonClaim == INVALIDPOKEMONNAMESTRING) {
 			return sendDeferredEphemeralMessage(interaction, generateInvalidNameString(pokemon_name));
 		}
@@ -90,23 +91,23 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
 		}
 
-		const evoLine = await getPokemonEvolutionaryLine(pokemon_name);
+		const evoLine = await getPokemonEvolutionaryLine(pokemon_name, interaction.id);
 		if (evoLine == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 
-		const nickname = await getNicknameFromInteraction(interaction, pokemon_name);
+		const nickname = await getNicknameFromInteraction(interaction, pokemon_name, interaction.id);
 		if (nickname.includes('InvalidGenderedClaimError')) {
 			return sendDeferredEphemeralMessage(interaction, nickname);
 		}
 
-		const newChangeDate = addMonths(new Date(Date.now()), 3);
+		const newChangeDate = addMonths(new Date(Date.now()), 3, interaction.id);
 
 		let errorClaims = [];
 		for (const index in evoLine) {
 			const pokemon = evoLine[index];
-			if (!(await addClaimToDatabase(serverName, pokemon, user, nickname, newChangeDate, isPermanent))) {
-				console.log('Error adding claim for ' + toCapitalCase(pokemon));
+			if (!(await addClaimToDatabase(serverName, pokemon, user, nickname, newChangeDate, isPermanent, interaction.id))) {
+				logMessage('Error adding claim for ' + toCapitalCase(pokemon), interaction.id);
 				errorClaims += pokemon;
 			}
 		}
@@ -115,7 +116,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
 		}
 		else {
-			console.log('Claim has been made successfully.');
+			logMessage('Claim has been made successfully.', interaction.id);
 			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimString(user, evoLine, nickname));
 		}
 	},

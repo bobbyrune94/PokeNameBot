@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, addClaimToDatabase, getNicknameFromInteraction, NOCLAIMSSTRING,
 	generateDatabaseErrorString } = require('../utils/database-utils');
+const { logMessage } = require('../utils/logging-utils');
 const { generateNoUserClaimString, generateDBEditErrors, generateSuccessfulUpdateString,
 	toCapitalCase, sendDeferredEphemeralMessage } = require('../utils/string-utils');
 
@@ -41,7 +42,7 @@ module.exports = {
 
 		const user = interaction.user.username;
 		const serverName = interaction.guild.name;
-		const userClaim = await getUserClaims(user, serverName);
+		const userClaim = await getUserClaims(user, serverName, interaction.id);
 		if (userClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
@@ -63,8 +64,8 @@ module.exports = {
 		let errorClaims = [];
 		for (const index in claimedPokemon) {
 			const pokemon = claimedPokemon[index];
-			if (!(await addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent))) {
-				console.log('Error adding claim for ' + toCapitalCase(pokemon));
+			if (!(await addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent, interaction.id))) {
+				logMessage('Error adding claim for ' + toCapitalCase(pokemon), interaction.id);
 				errorClaims += pokemon;
 			}
 		}
@@ -73,7 +74,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDBEditErrors(errorClaims, undefined));
 		}
 		else {
-			console.log('Nickname has been updated successfully');
+			logMessage('Nickname has been updated successfully', interaction.id);
 			return sendDeferredEphemeralMessage(interaction, generateSuccessfulUpdateString(user, claimedPokemon, nickname));
 		}
 	},
