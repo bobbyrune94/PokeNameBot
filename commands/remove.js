@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, removeClaimFromDatabase, addEntryToRemoveClaimTable, NOCLAIMSSTRING,
-	generateDatabaseErrorString } = require('../utils/database-utils');
+	generateDatabaseErrorString, CLAIMSFORMATTINGERROR } = require('../utils/database-utils');
 const { logMessage } = require('../utils/logging-utils');
 const { generateNoUserClaimString, generateDBEditErrors, generateSuccessfulRemovalString,
 	toCapitalCase, sendDeferredEphemeralMessage } = require('../utils/string-utils');
@@ -25,7 +25,7 @@ module.exports = {
 		else if (userClaim == NOCLAIMSSTRING) {
 			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
 		}
-		else if (typeof userClaim == 'string' && userClaim.includes('ClaimsFormattingError')) {
+		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
 		}
 

@@ -5,6 +5,17 @@ const { logMessage } = require('./logging-utils');
  */
 const CONTACTKENNYISSUESSTRING = 'If there are further issues, contact Kenny on Discord at bobbyrune94#9138.';
 const CONTACTKENNYINFOSTRING = 'If you would like more information on how all of this is set up, feel free to shoot Kenny a message on Discord at bobbyrune94#9138.';
+const UNDEFINEDENTRY = 'UNDEFINED';
+
+const INVALIDGENDEREDCLAIMERROR = 'InvalidGenderedClaimError';
+const INVALIDPOKEMONNAMESTRING = 'UndefinedPokemon';
+const INVALIDSERVERNAME = 'UndefinedServer';
+const NOCLAIMSSTRING = 'NoClaimsFound';
+const NOREMOVECLAIMDATA = 'NoRemoveClaimData';
+const ERRORCLAIMSTRING = 'CLAIMERRORFOUND';
+const CLAIMSFORMATTINGERROR = 'ClaimsFormattingError';
+const INVALIDNICKNAMEERROR = 'InvalidNicknameError';
+const TWOGENDEREDSTRING = 'two_genders';
 
 function sendEphemeralMessage(interaction, string) {
 	interaction.reply({
@@ -154,7 +165,7 @@ function generateInvalidGenderedNickname(pokemon, genderAnomalyString) {
 	if (genderAnomalyString == undefined) {
 		return 'DDBError: The bot had issues accessing the gender-anomaly database. Please try again in a couple minutes as there might be an outage.';
 	}
-	return 'InvalidGenderedClaimError: ' + toCapitalCase(pokemon) + ' has a ' + formatGenderAnomalyString(genderAnomalyString) +
+	return INVALIDGENDEREDCLAIMERROR + ': ' + toCapitalCase(pokemon) + ' has a ' + formatGenderAnomalyString(genderAnomalyString) +
 	' evolutionary line. Please try again with the "default" subcommand.';
 }
 
@@ -403,12 +414,14 @@ function generateAllCommandInfoString() {
 	'**Notes**:\n' + generatePokemonNameNotes() + CONTACTKENNYINFOSTRING;
 }
 
-module.exports = { CONTACTKENNYISSUESSTRING, CONTACTKENNYINFOSTRING, toCapitalCase, generateInvalidNameString, generateInvalidGenderedNickname,
-	generatePokemonAlreadyClaimedString, generateNoUserClaimString, generateUserClaimString,
+module.exports = { CONTACTKENNYISSUESSTRING, CONTACTKENNYINFOSTRING, UNDEFINEDENTRY, INVALIDGENDEREDCLAIMERROR, toCapitalCase, generateInvalidNameString,
+	generateInvalidGenderedNickname, generatePokemonAlreadyClaimedString, generateNoUserClaimString, generateUserClaimString,
 	generateUserAlreadyClaimedString, generateSuccessfulClaimString, generateViewClaimAlreadyClaimedString,
 	generateViewClaimNotClaimedString, generateDBEditErrors, generateGenderedNickname,
 	generateSuccessfulUpdateString, generateEarlyClaimChangeString, generateSuccessfulClaimChangeString,
 	generateSuccessfulRemovalString, generateCommandString, generateListString, sendEphemeralMessage, generateAllCommandInfoString,
 	generateRemovedClaimString, generateDirectionsCommandInfoString, generateClaimCommandInfoString, generateViewCommandInfoString,
 	generateEditCommandInfoString, generateChangeCommandInfoString, generateRemoveCommandInfoString, generatePokemonNameNotes,
-	generateInvalidCommandNameString, generateClaimsTableName, generateDatabaseErrorString, sendDeferredEphemeralMessage };
+	generateInvalidCommandNameString, generateClaimsTableName, generateDatabaseErrorString, sendDeferredEphemeralMessage,
+	INVALIDPOKEMONNAMESTRING, INVALIDSERVERNAME, NOCLAIMSSTRING, NOREMOVECLAIMDATA, ERRORCLAIMSTRING, CLAIMSFORMATTINGERROR,
+	INVALIDNICKNAMEERROR, TWOGENDEREDSTRING };

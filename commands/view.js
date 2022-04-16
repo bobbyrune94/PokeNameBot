@@ -1,10 +1,10 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getPokemonClaim, getUserClaims, NOCLAIMSSTRING, didUserRemoveClaim, INVALIDPOKEMONNAMESTRING,
-	getPokemonEvolutionaryLine } = require('../utils/database-utils');
+	getPokemonEvolutionaryLine, CLAIMSFORMATTINGERROR } = require('../utils/database-utils');
 const { logMessage } = require('../utils/logging-utils');
 const { generateInvalidNameString, generateViewClaimAlreadyClaimedString, generateViewClaimNotClaimedString,
 	generateNoUserClaimString, generateUserClaimString, sendDeferredEphemeralMessage,
-	generateRemovedClaimString, generateDatabaseErrorString } = require('../utils/string-utils');
+	generateRemovedClaimString, generateDatabaseErrorString, UNDEFINEDENTRY } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -49,7 +49,7 @@ module.exports = {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}
 
-			else if (pokemonClaim['username'] != 'UNDEFINED') {
+			else if (pokemonClaim['username'] != UNDEFINEDENTRY) {
 				logMessage('Pokemon has already been claimed', interaction.id);
 				const username = pokemonClaim['username'];
 				const nickname = pokemonClaim['nickname'];
@@ -72,7 +72,7 @@ module.exports = {
 				}
 				return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
 			}
-			else if (typeof userClaim == 'string' && userClaim.includes('ClaimsFormattingError')) {
+			else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 				return sendDeferredEphemeralMessage(interaction, userClaim);
 			}
 			else {

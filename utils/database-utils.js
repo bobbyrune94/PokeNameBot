@@ -3,14 +3,9 @@ const axios = require('axios');
 const emojiRegex = require('emoji-regex');
 const { logMessage } = require('./logging-utils.js');
 const { toCapitalCase, generateInvalidGenderedNickname, generateGenderedNickname, generateClaimsTableName,
-	CONTACTKENNYISSUESSTRING } = require('./string-utils.js');
+	CONTACTKENNYISSUESSTRING, INVALIDPOKEMONNAMESTRING, INVALIDSERVERNAME, NOCLAIMSSTRING, NOREMOVECLAIMDATA,
+	ERRORCLAIMSTRING, CLAIMSFORMATTINGERROR, INVALIDNICKNAMEERROR, TWOGENDEREDSTRING } = require('./string-utils.js');
 
-const INVALIDPOKEMONNAMESTRING = 'UndefinedPokemon';
-const INVALIDSERVERNAME = 'UndefinedServer';
-const NOCLAIMSSTRING = 'NoClaimsFound';
-const NOREMOVECLAIMDATA = 'NoRemoveClaimData';
-const ERRORCLAIMSTRING = 'CLAIMERRORFOUND';
-const TWOGENDEREDSTRING = 'two_genders';
 const emojis = emojiRegex();
 
 /**
@@ -164,7 +159,7 @@ async function getUserClaims(user, serverName, interactionId) {
 				const formattedClaims = formatUserClaims(user, result['data']['body']);
 				if (formattedClaims == ERRORCLAIMSTRING) {
 					logMessage('Error formatting user claims. Some of the fields may be mismatched', interactionId);
-					userClaims = 'ClaimsFormattingError: Error formatting user claims ' + JSON.stringify(result['data']['body']) +
+					userClaims = CLAIMSFORMATTINGERROR + ': Error formatting user claims ' + JSON.stringify(result['data']['body']) +
 					' Please contact a moderator to resolve this issue. ' + CONTACTKENNYISSUESSTRING;
 				}
 				else {
@@ -312,22 +307,22 @@ async function isGenderAnomalyPokemon(pokemon, interactionId) {
  */
 function validateNickname(nickname, interaction) {
 	if (nickname.match(/<:.+?:\d+>/g)) {
-		const errorMessage = 'InvalidNicknameError: Nickname cannot contain static discord emote.';
+		const errorMessage = INVALIDNICKNAMEERROR + ': Nickname cannot contain static discord emotes.';
 		logMessage(errorMessage, interaction.id);
 		return errorMessage;
 	}
 	else if (nickname.match(/<a:.+?:\d+>|<:.+?:\d+>/g)) {
-		const errorMessage = 'InvalidNicknameError: Nickname cannot contain animated discord emote.';
+		const errorMessage = INVALIDNICKNAMEERROR + ': Nickname cannot contain animated discord emotes.';
 		logMessage(errorMessage, interaction.id);
 		return errorMessage;
 	}
 	else if (nickname.match(emojis)) {
-		const errorMessage = 'InvalidNicknameError: Nickname cannot contain emojis.';
+		const errorMessage = INVALIDNICKNAMEERROR + ': Nickname cannot contain emojis.';
 		logMessage(errorMessage, interaction.id);
 		return errorMessage;
 	}
 	else if (nickname.length > 12) {
-		const errorMessage = 'InvalidNicknameError: Nickname length is greater than 12 characters.';
+		const errorMessage = INVALIDNICKNAMEERROR + ': Nickname length is greater than 12 characters.';
 		logMessage(errorMessage, interaction.id);
 		return errorMessage;
 	}
@@ -356,12 +351,12 @@ async function getNicknameFromInteraction(interaction, pokemon) {
 		}
 
 		const maleNickname = validateNickname(interaction.options.getString('male-nickname'), interaction);
-		if (maleNickname.includes('InvalidNicknameError')) {
+		if (maleNickname.includes(INVALIDNICKNAMEERROR)) {
 			return maleNickname;
 		}
 
 		const femaleNickname = validateNickname(interaction.options.getString('female-nickname'), interaction);
-		if (femaleNickname.includes('InvalidNicknameError')) {
+		if (femaleNickname.includes(INVALIDNICKNAMEERROR)) {
 			return femaleNickname;
 		}
 
@@ -595,4 +590,5 @@ async function didUserRemoveClaim(user, server, interactionId) {
 }
 
 module.exports = { addClaimToDatabase, removeClaimFromDatabase, getUserClaims, getPokemonClaim, canUserMakeClaim, NOCLAIMSSTRING,
-	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim, addEntryToRemoveClaimTable, INVALIDPOKEMONNAMESTRING };
+	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim, addEntryToRemoveClaimTable, INVALIDPOKEMONNAMESTRING,
+	CLAIMSFORMATTINGERROR, INVALIDNICKNAMEERROR };

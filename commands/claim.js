@@ -1,12 +1,12 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, addClaimToDatabase, getPokemonClaim,
-	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim,
-	INVALIDPOKEMONNAMESTRING } = require('../utils/database-utils');
+	getPokemonEvolutionaryLine, getNicknameFromInteraction, didUserRemoveClaim, INVALIDPOKEMONNAMESTRING,
+	CLAIMSFORMATTINGERROR, INVALIDNICKNAMEERROR } = require('../utils/database-utils');
 const { addMonths } = require('../utils/date-utils');
 const { logMessage } = require('../utils/logging-utils');
 const { toCapitalCase, generateInvalidNameString, generateUserAlreadyClaimedString, generateDBEditErrors,
 	generatePokemonAlreadyClaimedString, generateSuccessfulClaimString, sendDeferredEphemeralMessage,
-	generateRemovedClaimString, generateDatabaseErrorString } = require('../utils/string-utils');
+	generateRemovedClaimString, generateDatabaseErrorString, UNDEFINEDENTRY, INVALIDGENDEREDCLAIMERROR } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -70,7 +70,7 @@ module.exports = {
 			const nextChangeDate = new Date(userClaim['next-change-date']);
 			return sendDeferredEphemeralMessage(interaction, generateUserAlreadyClaimedString(user, nextChangeDate));
 		}
-		else if (typeof userClaim == 'string' && userClaim.includes('ClaimsFormattingError')) {
+		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
 		}
 
@@ -89,7 +89,7 @@ module.exports = {
 		else if (pokemonClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
-		if (pokemonClaim['nickname'] != 'UNDEFINED') {
+		if (pokemonClaim['nickname'] != UNDEFINEDENTRY) {
 			return sendDeferredEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
 		}
 
@@ -99,7 +99,7 @@ module.exports = {
 		}
 
 		const nickname = await getNicknameFromInteraction(interaction, pokemon_name, interaction.id);
-		if (nickname.includes('InvalidGenderedClaimError') || nickname.includes('InvalidNicknameError')) {
+		if (nickname.includes(INVALIDGENDEREDCLAIMERROR) || nickname.includes(INVALIDNICKNAMEERROR)) {
 			return sendDeferredEphemeralMessage(interaction, nickname);
 		}
 

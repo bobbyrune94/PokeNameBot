@@ -1,9 +1,9 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getUserClaims, addClaimToDatabase, getNicknameFromInteraction, NOCLAIMSSTRING,
-	generateDatabaseErrorString } = require('../utils/database-utils');
+	generateDatabaseErrorString, CLAIMSFORMATTINGERROR, INVALIDNICKNAMEERROR } = require('../utils/database-utils');
 const { logMessage } = require('../utils/logging-utils');
 const { generateNoUserClaimString, generateDBEditErrors, generateSuccessfulUpdateString,
-	toCapitalCase, sendDeferredEphemeralMessage } = require('../utils/string-utils');
+	toCapitalCase, sendDeferredEphemeralMessage, INVALIDGENDEREDCLAIMERROR } = require('../utils/string-utils');
 
 module.exports = {
 	data : new SlashCommandBuilder()
@@ -51,7 +51,7 @@ module.exports = {
 		else if (userClaim == NOCLAIMSSTRING) {
 			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
 		}
-		else if (typeof userClaim == 'string' && userClaim.includes('ClaimsFormattingError')) {
+		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
 		}
 
@@ -59,7 +59,7 @@ module.exports = {
 		const nextChangeDate = new Date(Date.parse(userClaim['next-change-date']));
 
 		const nickname = await getNicknameFromInteraction(interaction, claimedPokemon[0]);
-		if (nickname.includes('InvalidGenderedClaimError') || nickname.includes('InvalidNicknameError')) {
+		if (nickname.includes(INVALIDGENDEREDCLAIMERROR) || nickname.includes(INVALIDNICKNAMEERROR)) {
 			return sendDeferredEphemeralMessage(interaction, nickname);
 		}
 
