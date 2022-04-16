@@ -11,6 +11,7 @@
     "discord.io": "^2.5.3",
     "discord.js": "^13.6.0",
     "dotenv": "^16.0.0",
+    "emoji-regex": "^10.1.0",
     "node-fetch": "^3.2.0",
     "winston": "^3.6.0"
   },

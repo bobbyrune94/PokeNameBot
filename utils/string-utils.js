@@ -1,3 +1,5 @@
+const { logMessage } = require('./logging-utils');
+
 /**
  * The string to display when requiring users to contact the system designer and builder for any serious issues.
  */
@@ -15,6 +17,8 @@ function sendDeferredEphemeralMessage(interaction, string) {
 	interaction.editReply({
 		content: string,
 		ephemeral: true,
+	}).catch(err => {
+		logMessage('Error Returning Message: ' + err, interaction.id);
 	});
 }
 
@@ -121,6 +125,11 @@ function generatePokemonAlreadyClaimedString(pokemon) {
 	return 'AlreadyClaimedError: ' + toCapitalCase(pokemon) + ' has already been claimed.';
 }
 
+/**
+ * Formats the Gender Anomaly String to something more human readable
+ * @param {string} genderAnomalyString the gender-anomaly string
+ * @returns the formatted string
+ */
 function formatGenderAnomalyString(genderAnomalyString) {
 	switch (genderAnomalyString) {
 	case 'genderless':
@@ -289,7 +298,10 @@ function generateRemovedClaimString(user, nextClaimDate) {
 function generateClaimsTableName(serverName) {
 	return serverName.replace(/[^a-zA-Z0-9]+/g, '') + 'ClaimsTable';
 }
-
+/**
+ * Generates the string to return if there is an error with the databases
+ * @returns the formatted info string
+ */
 function generateDatabaseErrorString() {
 	return 'Database Error: An Error Occurred in the database. Please wait a while before trying again as this is likely an outage. If the issue persists, contact Kenny on discord at bobbyrune94#9138';
 }

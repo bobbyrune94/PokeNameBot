@@ -30,7 +30,6 @@ module.exports = {
 	async execute(interaction, isPermanent) {
 		interaction.deferReply({ ephemeral: true }).catch(err => {
 			logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
-			interaction.reply('Error Deferring Reply');
 		});
 		const user = interaction.user.username;
 		const serverName = interaction.guild.name;

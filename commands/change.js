@@ -53,7 +53,9 @@ module.exports = {
 				),
 		),
 	async execute(interaction, isPermanent) {
-		interaction.deferReply({ ephemeral: true });
+		interaction.deferReply({ ephemeral: true }).catch(err => {
+			logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
+		});
 
 		const user = interaction.user.username;
 		const serverName = interaction.guild.name;
@@ -93,7 +95,7 @@ module.exports = {
 		logMessage('Claim is past 3 month change threshold. Continuing', interaction.id);
 
 		const newNickname = await getNicknameFromInteraction(interaction, pokemon_name);
-		if (newNickname.includes('InvalidGenderedClaimError')) {
+		if (newNickname.includes('InvalidGenderedClaimError') || newNickname.includes('InvalidNicknameError')) {
 			return sendDeferredEphemeralMessage(interaction, newNickname);
 		}
 

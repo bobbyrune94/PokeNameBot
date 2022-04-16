@@ -53,7 +53,9 @@ module.exports = {
 				),
 		),
 	async execute(interaction, isPermanent) {
-		interaction.deferReply({ ephemeral: true });
+		interaction.deferReply({ ephemeral: true }).catch(err => {
+			logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
+		});
 
 		const user = interaction.user.username;
 		const serverName = interaction.guild.name;
@@ -97,7 +99,7 @@ module.exports = {
 		}
 
 		const nickname = await getNicknameFromInteraction(interaction, pokemon_name, interaction.id);
-		if (nickname.includes('InvalidGenderedClaimError')) {
+		if (nickname.includes('InvalidGenderedClaimError') || nickname.includes('InvalidNicknameError')) {
 			return sendDeferredEphemeralMessage(interaction, nickname);
 		}
 

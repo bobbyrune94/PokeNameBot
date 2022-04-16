@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 const axios = require('axios');
+const emojiRegex = require('emoji-regex');
 const { logMessage } = require('./logging-utils.js');
 const { toCapitalCase, generateInvalidGenderedNickname, generateGenderedNickname, generateClaimsTableName,
 	CONTACTKENNYISSUESSTRING } = require('./string-utils.js');
@@ -10,6 +11,7 @@ const NOCLAIMSSTRING = 'NoClaimsFound';
 const NOREMOVECLAIMDATA = 'NoRemoveClaimData';
 const ERRORCLAIMSTRING = 'CLAIMERRORFOUND';
 const TWOGENDEREDSTRING = 'two_genders';
+const emojis = emojiRegex();
 
 /**
  * Queries the claims database to add the user and nickname claims for the pokemon
@@ -300,6 +302,40 @@ async function isGenderAnomalyPokemon(pokemon, interactionId) {
 }
 
 /**
+ * Validates that the nickname follows the following rules:
+ * No discord server emotes (animated or static)
+ * No emojis
+ * Less than 12 characters in length
+ * @param {string} nickname the nickname to validate
+ * @param {Interaction} interaction the interaction that triggered this function. Used for logging purposes
+ * @returns the nickname if it's a valid nickname, otherwsie a string containing InvalidNicknameError
+ */
+function validateNickname(nickname, interaction) {
+	if (nickname.match(/<:.+?:\d+>/g)) {
+		const errorMessage = 'InvalidNicknameError: Nickname cannot contain static discord emote.';
+		logMessage(errorMessage, interaction.id);
+		return errorMessage;
+	}
+	else if (nickname.match(/<a:.+?:\d+>|<:.+?:\d+>/g)) {
+		const errorMessage = 'InvalidNicknameError: Nickname cannot contain animated discord emote.';
+		logMessage(errorMessage, interaction.id);
+		return errorMessage;
+	}
+	else if (nickname.match(emojis)) {
+		const errorMessage = 'InvalidNicknameError: Nickname cannot contain emojis.';
+		logMessage(errorMessage, interaction.id);
+		return errorMessage;
+	}
+	else if (nickname.length > 12) {
+		const errorMessage = 'InvalidNicknameError: Nickname length is greater than 12 characters.';
+		logMessage(errorMessage, interaction.id);
+		return errorMessage;
+	}
+	logMessage(nickname + ' is a valid nickname');
+	return nickname;
+}
+
+/**
  * Generates the nickname for the pokemon from getting the subcommands and options from the interaction.
  * Will return an error message when the interaction makes a gendered nickname claim when the pokemon doesn't have two genders
  * @param {Interaction} interaction the interaction to parse
@@ -311,7 +347,7 @@ async function getNicknameFromInteraction(interaction, pokemon) {
 	if (interaction.options.getSubcommand() === 'default') {
 		const nickname = interaction.options.getString('nickname');
 		logMessage('Got nickname for ' + toCapitalCase(pokemon) + ' as ' + nickname, interaction.id);
-		return nickname;
+		return validateNickname(nickname, interaction);
 	}
 	else if (interaction.options.getSubcommand() === 'gendered') {
 		const anomalyString = await isGenderAnomalyPokemon(pokemon, interaction.id);
@@ -319,8 +355,15 @@ async function getNicknameFromInteraction(interaction, pokemon) {
 			return generateInvalidGenderedNickname(pokemon, anomalyString);
 		}
 
-		const maleNickname = interaction.options.getString('male-nickname');
-		const femaleNickname = interaction.options.getString('female-nickname');
+		const maleNickname = validateNickname(interaction.options.getString('male-nickname'), interaction);
+		if (maleNickname.includes('InvalidNicknameError')) {
+			return maleNickname;
+		}
+
+		const femaleNickname = validateNickname(interaction.options.getString('female-nickname'), interaction);
+		if (femaleNickname.includes('InvalidNicknameError')) {
+			return femaleNickname;
+		}
 
 		const formattedGenderNicknames = generateGenderedNickname(maleNickname, femaleNickname);
 		logMessage('Generated the formatted string for the gender nicknames for ' + toCapitalCase(pokemon) + ': ' + formattedGenderNicknames, interaction.id);
