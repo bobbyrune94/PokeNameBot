@@ -326,7 +326,7 @@ function validateNickname(nickname, interaction) {
 		logMessage(errorMessage, interaction.id);
 		return errorMessage;
 	}
-	logMessage(nickname + ' is a valid nickname');
+	logMessage(nickname + ' is a valid nickname', interaction.id);
 	return nickname;
 }
 
@@ -451,7 +451,7 @@ async function canUserMakeClaim(member, server, interactionId) {
 		}
 
 		// if user hasn't been determined to make a permanent claim
-		if (!canClaimArray[1]) {
+		if (!canClaimArray[1] && claimRoles['perma-claim-roles'].length > 0) {
 			if (claimRoles['perma-claim-roles'].includes(role)) {
 				logMessage('User has ' + role + ' role, allowing them to make a permanent claim in the system', interactionId);
 				canClaimArray[1] = true;

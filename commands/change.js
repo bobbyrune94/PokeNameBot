@@ -78,7 +78,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 		else if (userClaim == NOCLAIMSSTRING) {
-			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString());
 		}
 		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
@@ -91,7 +91,7 @@ module.exports = {
 		logMessage('Checking if the change occurred too early. Current date ' + new Date(Date.now()) + ' must be after ' + changeClaimDate.toDateString(), interaction.id);
 		if (new Date(Date.now()) < changeClaimDate) {
 			logMessage('Claim change was too early', interaction.id);
-			return sendDeferredEphemeralMessage(interaction, generateEarlyClaimChangeString(user, changeClaimDate));
+			return sendDeferredEphemeralMessage(interaction, generateEarlyClaimChangeString(changeClaimDate));
 		}
 		logMessage('Claim is past 3 month change threshold. Continuing', interaction.id);
 
@@ -126,7 +126,7 @@ module.exports = {
 		}
 		else {
 			logMessage('Claim has been changed successfully.', interaction.id);
-			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimChangeString(user, newEvoLine, newNickname, oldClaims, oldNickname));
+			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimChangeString(newEvoLine, newNickname, oldClaims, oldNickname));
 		}
 	},
 };

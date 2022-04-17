@@ -53,11 +53,11 @@ module.exports = {
 				logMessage('Pokemon has already been claimed', interaction.id);
 				const username = pokemonClaim['username'];
 				const nickname = pokemonClaim['nickname'];
-				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(user, pokemon, evoline, username, nickname));
+				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(pokemon, evoline, username, nickname));
 			}
 			else {
 				logMessage('Pokemon has not yet been claimed', interaction.id);
-				return sendDeferredEphemeralMessage(interaction, generateViewClaimNotClaimedString(user, pokemon, evoline));
+				return sendDeferredEphemeralMessage(interaction, generateViewClaimNotClaimedString(pokemon, evoline));
 			}
 		}
 		else if (interaction.options.getSubcommand() === 'claim') {
@@ -68,9 +68,9 @@ module.exports = {
 			else if (userClaim === NOCLAIMSSTRING) {
 				const nextClaimDate = await didUserRemoveClaim(user, serverName, interaction.id);
 				if (nextClaimDate != undefined && nextClaimDate != false) {
-					return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(user, nextClaimDate));
+					return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(nextClaimDate));
 				}
-				return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+				return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString());
 			}
 			else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 				return sendDeferredEphemeralMessage(interaction, userClaim);
@@ -79,9 +79,9 @@ module.exports = {
 				const claimedPokemon = userClaim['claimed-pokemon'];
 				const nickname = userClaim['nickname'];
 				if (claimedPokemon == undefined || claimedPokemon.length == 0) {
-					return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+					return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString());
 				}
-				return sendDeferredEphemeralMessage(interaction, generateUserClaimString(user, claimedPokemon, nickname));
+				return sendDeferredEphemeralMessage(interaction, generateUserClaimString(claimedPokemon, nickname));
 			}
 		}
 	},

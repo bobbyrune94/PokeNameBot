@@ -68,7 +68,7 @@ module.exports = {
 		else if (typeof userClaim == 'object') {
 			logMessage('User claim found, unable to make claim', interaction.id);
 			const nextChangeDate = new Date(userClaim['next-change-date']);
-			return sendDeferredEphemeralMessage(interaction, generateUserAlreadyClaimedString(user, nextChangeDate));
+			return sendDeferredEphemeralMessage(interaction, generateUserAlreadyClaimedString(nextChangeDate));
 		}
 		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
@@ -79,7 +79,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 		else if (typeof nextClaimDate == 'string') {
-			return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(user, new Date(nextClaimDate)));
+			return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(new Date(nextClaimDate)));
 		}
 
 		const pokemonClaim = await getPokemonClaim(pokemon_name, interaction.guild.name, interaction.id);
@@ -119,7 +119,7 @@ module.exports = {
 		}
 		else {
 			logMessage('Claim has been made successfully.', interaction.id);
-			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimString(user, evoLine, nickname));
+			return sendDeferredEphemeralMessage(interaction, generateSuccessfulClaimString(evoLine, nickname));
 		}
 	},
 };

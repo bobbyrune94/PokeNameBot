@@ -23,7 +23,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 		else if (userClaim == NOCLAIMSSTRING) {
-			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString());
 		}
 		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
@@ -50,7 +50,7 @@ module.exports = {
 		}
 		else {
 			logMessage('Claims removed successfully', interaction.id);
-			return sendDeferredEphemeralMessage(interaction, generateSuccessfulRemovalString(user, claimedPokemon, nextChangeDate));
+			return sendDeferredEphemeralMessage(interaction, generateSuccessfulRemovalString(claimedPokemon, nextChangeDate));
 		}
 	},
 };

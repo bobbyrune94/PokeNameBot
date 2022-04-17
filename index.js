@@ -9,7 +9,7 @@ const { logMessage } = require('./utils/logging-utils.js');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 const talkedRecently = new Set();
-const MESSAGECOOLDOWN = 30000; // 30 seconds
+const MESSAGECOOLDOWN = 15000; // 15 seconds
 const CHANNELNAMEREQUIREMENT = 'nuzlocke-name-claim';
 
 client.commands = new Collection();
@@ -44,6 +44,10 @@ client.on('interactionCreate', async interaction => {
 
 	setTimeout(() => {
 		logMessage(interaction.user.username + ' can now call another command.', interaction.id);
+		interaction.followUp({
+			content: 'You may now call another command',
+			ephemeral: true,
+		});
 		talkedRecently.delete(interaction.user.id);
 	}, MESSAGECOOLDOWN);
 

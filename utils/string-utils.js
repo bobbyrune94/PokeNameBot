@@ -87,34 +87,31 @@ function generateGenderedNickname(maleNickname, femaleNickname) {
 
 /**
  * Generates the error output string for when a user has not claimed a pokemon yet
- * @param {string} user the user executing the command
  * @returns the formatted error string
  */
-function generateNoUserClaimString(user) {
-	return user + ', you have not claimed a Pokemon yet. Use the "/claim" command to make your claim.';
+function generateNoUserClaimString() {
+	return 'You have not claimed a Pokemon yet. Use the "/claim" command to make your claim.';
 }
 
 /**
  * Generates the error output string for when the user already has a claim.
  * The string also displays the next available time the user can change their claim
- * @param {string} user the user executing the command
  * @param {Date} expireDate the date that the user can change their claim
  * @returns the formatted error string
  */
-function generateUserAlreadyClaimedString(user, expireDate) {
-	return 'ExistingClaimError: ' + user + ', you have already claimed a Pokemon. Please wait until ' +
+function generateUserAlreadyClaimedString(expireDate) {
+	return 'ExistingClaimError: You have already claimed a Pokemon. Please wait until ' +
     expireDate.toDateString() + ' if you would like to change your claim.';
 }
 
 /**
  * Generates the error output string for when the user tries to change their claim too early.
  * The string also displays the next available time the user can change their claim
- * @param {string} user the user executing the command
  * @param {Date} expireDate the date that the user can change their claim
  * @returns the formatted error string
  */
-function generateEarlyClaimChangeString(user, date) {
-	return 'EarlyChangeClaimError: ' + user + ', you are unable to change your claim at this time. Please wait until ' +
+function generateEarlyClaimChangeString(date) {
+	return 'EarlyChangeClaimError: You are unable to change your claim at this time. Please wait until ' +
      date.toDateString() + ' if you would like to change your claim.';
 }
 
@@ -171,39 +168,36 @@ function generateInvalidGenderedNickname(pokemon, genderAnomalyString) {
 
 /**
  * Generates the output string for when the user views a pokemon that has already been claimed
- * @param {string} user the username of the user calling the command
  * @param {string} pokemon the name of the pokemon
  * @param {list of string} evoline the list of pokemon in the evolutionary line
  * @param {string} username the username of the person who claimed it
  * @param {string} nickname the nickname that the claimer chose
  * @returns the formatted string
  */
-function generateViewClaimAlreadyClaimedString(user, pokemon, evoline, username, nickname) {
-	return user + ', ' + toCapitalCase(pokemon) + ' has already been claimed by ' + username + ' with the nickname "' + nickname +
+function generateViewClaimAlreadyClaimedString(pokemon, evoline, username, nickname) {
+	return toCapitalCase(pokemon) + ' has already been claimed by ' + username + ' with the nickname "' + nickname +
 	'". They have also claimed ' + generateListString(evoline);
 }
 
 /**
  * Generates the output string for when a user views a claimable pokemon and doesn't have a claim of their own
- * @param {string} user the user executing the command
  * @param {string} pokemon the pokemon the user is checking the claims for
  * @returns the formatted string
  */
-function generateViewClaimNotClaimedString(user, pokemon, evoline) {
-	return user + ', ' + toCapitalCase(pokemon) + ' has not been claimed yet. If you wish to claim this pokemon, you will also claim ' +
+function generateViewClaimNotClaimedString(pokemon, evoline) {
+	return toCapitalCase(pokemon) + ' has not been claimed yet. If you wish to claim this pokemon, you will also claim ' +
 	generateListString(evoline);
 }
 
 /**
  * Generates the output string for a user with existing claims viewing their claims
- * @param {string} user the user executing the command
  * @param {list of string} claimedPokemon the pokemon that the user has claimed
  * @param {string} nickname the nickname the user claimed for the pokemon
  * @returns the formatted error string
  */
-function generateUserClaimString(user, claimedPokemon, nickname) {
+function generateUserClaimString(claimedPokemon, nickname) {
 	const capitalizedPokemon = claimedPokemon.map(pokemon => toCapitalCase(pokemon));
-	return user + ', you have claimed the following pokemon: ' + generateListString(capitalizedPokemon)
+	return 'You have claimed the following pokemon: ' + generateListString(capitalizedPokemon)
     + ' with the nickname "' + nickname + '".';
 }
 
@@ -214,52 +208,49 @@ function generateUserClaimString(user, claimedPokemon, nickname) {
  * @param {string} nickname the nickname the user wishes to name the pokemon
  * @returns the formatted error string
  */
-function generateSuccessfulClaimString(user, claimedPokemon, nickname) {
+function generateSuccessfulClaimString(claimedPokemon, nickname) {
 	const capitalizedPokemon = claimedPokemon.map(pokemon => toCapitalCase(pokemon));
-	return user + ' has successfully claimed the nickname "' + nickname + '" for the pokemon line '
+	return 'You have successfully claimed the nickname "' + nickname + '" for the pokemon line '
     + generateListString(capitalizedPokemon) + '.';
 }
 
 /**
  * Generates the output message when a user successfully updates their nickname for their given claim
- * @param {string} user the user executing the command
  * @param {list of string} claimedPokemon the pokemon that the user has claimed
  * @param {string} nickname the new nickname the user has updated to
  * @returns the formatted error string
  */
-function generateSuccessfulUpdateString(user, claimedPokemon, nickname) {
+function generateSuccessfulUpdateString(claimedPokemon, nickname) {
 	const capitalizedPokemon = claimedPokemon.map(pokemon => toCapitalCase(pokemon));
-	return user + ' has successfully updated their nickname for the pokemon line '
+	return 'You have successfully updated your nickname for the pokemon line '
     + generateListString(capitalizedPokemon) + ' to ' + nickname + '.';
 }
 
 /**
  * Generates the output string for when a user successfully updates their claim from one group of pokemon to another
- * @param {string} user the user executing the command
  * @param {list of strings} newClaims the new pokemon that the user has changed their claim to
  * @param {string} newNickname the nickname for the new pokemon the user has claimed
  * @param {list of strings} oldClaims the old pokemon that the user has moved their claim away from
  * @param {string} oldNickname the former nickname for the formerly-claimed pokemon
  * @returns the formatted error string
  */
-function generateSuccessfulClaimChangeString(user, newClaims, newNickname, oldClaims, oldNickname) {
+function generateSuccessfulClaimChangeString(newClaims, newNickname, oldClaims, oldNickname) {
 	const capitalizedNewClaims = newClaims.map(pokemon => toCapitalCase(pokemon));
 	const capitalizedOldClaims = oldClaims.map(pokemon => toCapitalCase(pokemon));
-	return user + ', you\'ve successfully claimed the nickname "' + newNickname + '" for '
+	return 'You\'ve successfully claimed the nickname "' + newNickname + '" for '
     + generateListString(capitalizedNewClaims) + '. Your old nickname claim of "' + oldNickname + '" for '
     + generateListString(capitalizedOldClaims) + ' has been removed.';
 }
 
 /**
  * Generates the output string for then a user successfully removes all of their claims from the system
- * @param {string} user the user executing the command
  * @param {list of strings} oldClaims the pokemon that the user had claimed, but are no longer claimed
  * @param {Date} nextClaimDate the next date the user can claim a date
  * @returns the formatted error string
  */
-function generateSuccessfulRemovalString(user, oldClaims, nextClaimDate) {
+function generateSuccessfulRemovalString(oldClaims, nextClaimDate) {
 	const capitalizedOldClaims = oldClaims.map(pokemon => toCapitalCase(pokemon));
-	return user + ', you have successfully removed your claims for ' + generateListString(capitalizedOldClaims)
+	return 'You have successfully removed your claims for ' + generateListString(capitalizedOldClaims)
     + ' from the system. If you would like to claim a pokemon again, please wait until ' + nextClaimDate.toDateString() + ' before using the \'claim\' command again.';
 }
 
@@ -289,12 +280,11 @@ function generateDBEditErrors(addErrors, removeErrors) {
 
 /**
  * Generates the string for when the user made a claim within the last 3 months, but removed it
- * @param {string} user the user who executed the message
  * @param {Date} nextClaimDate the next date that the user can claim a Pokemon
  * @returns the formatted string
  */
-function generateRemovedClaimString(user, nextClaimDate) {
-	return user + ', you have removed a claim within the last three months. The next time you can claim a Pokemon is ' + nextClaimDate;
+function generateRemovedClaimString(nextClaimDate) {
+	return 'You have removed a claim within the last three months. The next time you can claim a Pokemon is ' + nextClaimDate;
 }
 
 /**

@@ -49,7 +49,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
 		else if (userClaim == NOCLAIMSSTRING) {
-			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString(user));
+			return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString());
 		}
 		else if (typeof userClaim == 'string' && userClaim.includes(CLAIMSFORMATTINGERROR)) {
 			return sendDeferredEphemeralMessage(interaction, userClaim);
@@ -77,7 +77,7 @@ module.exports = {
 		}
 		else {
 			logMessage('Nickname has been updated successfully', interaction.id);
-			return sendDeferredEphemeralMessage(interaction, generateSuccessfulUpdateString(user, claimedPokemon, nickname));
+			return sendDeferredEphemeralMessage(interaction, generateSuccessfulUpdateString(claimedPokemon, nickname));
 		}
 	},
 };
