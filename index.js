@@ -33,23 +33,23 @@ client.on('interactionCreate', async interaction => {
 		return;
 	}
 
-	if (talkedRecently.has(interaction.user.id)) {
-		logMessage(interaction.user.username + ' used a command within the cooldown', interaction.id);
-		sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait 30 Seconds Before Using Another Command');
-		return;
-	}
+	// if (talkedRecently.has(interaction.user.id)) {
+	// 	logMessage(interaction.user.username + ' used a command within the cooldown', interaction.id);
+	// 	sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait 30 Seconds Before Using Another Command');
+	// 	return;
+	// }
 
 	logMessage(interaction.user.username + ' is now on cooldown. Please wait ' + Math.round(MESSAGECOOLDOWN / 1000) + ' seconds before calling another command', interaction.id);
 	talkedRecently.add(interaction.user.id);
 
-	setTimeout(() => {
-		logMessage(interaction.user.username + ' can now call another command.', interaction.id);
-		interaction.followUp({
-			content: 'You may now call another command',
-			ephemeral: true,
-		});
-		talkedRecently.delete(interaction.user.id);
-	}, MESSAGECOOLDOWN);
+	// setTimeout(() => {
+	// 	logMessage(interaction.user.username + ' can now call another command.', interaction.id);
+	// 	interaction.followUp({
+	// 		content: 'You may now call another command',
+	// 		ephemeral: true,
+	// 	});
+	// 	talkedRecently.delete(interaction.user.id);
+	// }, MESSAGECOOLDOWN);
 
 	logMessage('Message sent in channel ' + interaction.channel.name, interaction.id);
 	if (!interaction.channel.name.includes(CHANNELNAMEREQUIREMENT)) {
