@@ -35,7 +35,7 @@ client.on('interactionCreate', async interaction => {
 
 	if (talkedRecently.has(interaction.user.id)) {
 		logMessage(interaction.user.username + ' used a command within the cooldown', interaction.id);
-		sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait 30 Seconds Before Using Another Command');
+		sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait ' + Math.round(MESSAGECOOLDOWN / 1000) + ' Seconds Before Using Another Command');
 		return;
 	}
 
