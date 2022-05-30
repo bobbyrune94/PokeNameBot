@@ -30,12 +30,15 @@ function sendDeferredEphemeralMessage(interaction, string) {
 		ephemeral: true,
 	}).catch(err => {
 		logMessage('Error Returning Message: ' + err, interaction.id);
-		interaction.followUp({
-			content: string,
-			ephemeral: true,
-		}).catch(err2 => {
-			logMessage('Follow Up Failed: ' + err2, interaction.id);
-		});
+		setTimeout(() => {
+			logMessage('Trying to reply again after 5 seconds.', interaction.id);
+			interaction.followUp({
+				content: string,
+				ephemeral: true,
+			}).catch(err2 => {
+				logMessage('Retry failed with error: ' + err2, interaction.id);
+			});
+		}, 5000);
 	});
 }
 
