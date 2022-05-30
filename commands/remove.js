@@ -11,10 +11,6 @@ module.exports = {
 		.setDescription('Delete your claim from the system'),
 	// eslint-disable-next-line no-unused-vars
 	async execute(interaction, isPermanent) {
-		interaction.deferReply({ ephemeral: true }).catch(err => {
-			logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
-		});
-
 		const user = interaction.user.username;
 		const serverName = interaction.guild.name;
 
