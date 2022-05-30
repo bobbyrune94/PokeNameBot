@@ -33,11 +33,11 @@ client.on('interactionCreate', async interaction => {
 		return;
 	}
 
-	// if (talkedRecently.has(interaction.user.id)) {
-	// 	logMessage(interaction.user.username + ' used a command within the cooldown', interaction.id);
-	// 	sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait 30 Seconds Before Using Another Command');
-	// 	return;
-	// }
+	if (talkedRecently.has(interaction.user.id)) {
+		logMessage(interaction.user.username + ' used a command within the cooldown', interaction.id);
+		sendEphemeralMessage(interaction, 'User Message Cooldown: Please Wait 30 Seconds Before Using Another Command');
+		return;
+	}
 
 	logMessage(interaction.user.username + ' is now on cooldown. Please wait ' + Math.round(MESSAGECOOLDOWN / 1000) + ' seconds before calling another command', interaction.id);
 	talkedRecently.add(interaction.user.id);
