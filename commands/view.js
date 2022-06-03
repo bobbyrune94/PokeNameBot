@@ -28,7 +28,9 @@ module.exports = {
 		),
 	// eslint-disable-next-line no-unused-vars
 	async execute(interaction, isPermanent) {
-		const user = interaction.user.username;
+		const userId = interaction.user.id;
+		const username = interaction.user.username;
+
 		const serverName = interaction.guild.name;
 
 		if (interaction.options.getSubcommand() === 'pokemon') {
@@ -46,11 +48,11 @@ module.exports = {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}
 
-			else if (pokemonClaim['username'] != UNDEFINEDENTRY) {
+			else if (pokemonClaim['discord-id'] != UNDEFINEDENTRY) {
 				logMessage('Pokemon has already been claimed', interaction.id);
-				const username = pokemonClaim['username'];
+				const claimer = pokemonClaim['discord-username'];
 				const nickname = pokemonClaim['nickname'];
-				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(pokemon, evoline, username, nickname));
+				return sendDeferredEphemeralMessage(interaction, generateViewClaimAlreadyClaimedString(pokemon, evoline, claimer, nickname));
 			}
 			else {
 				logMessage('Pokemon has not yet been claimed', interaction.id);
@@ -58,12 +60,12 @@ module.exports = {
 			}
 		}
 		else if (interaction.options.getSubcommand() === 'claim') {
-			const userClaim = await getUserClaims(user, serverName, interaction.id);
+			const userClaim = await getUserClaims(userId, username, serverName, interaction.id);
 			if (userClaim == undefined) {
 				return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 			}
 			else if (userClaim === NOCLAIMSSTRING) {
-				const nextClaimDate = await didUserRemoveClaim(user, serverName, interaction.id);
+				const nextClaimDate = await didUserRemoveClaim(userId, serverName, interaction.id);
 				if (nextClaimDate != undefined && nextClaimDate != false) {
 					return sendDeferredEphemeralMessage(interaction, generateRemovedClaimString(nextClaimDate));
 				}

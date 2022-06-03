@@ -12,16 +12,17 @@ const emojis = emojiRegex();
  * Queries the claims database to add the user and nickname claims for the pokemon
  * @param {string} serverName the name of the server the command was called in
  * @param {string} pokemon the pokemon to add the claim to
- * @param {string} user the user that claimed the pokemon
+ * @param {string} userId the discord Id of the user that claimed the pokemon
+ * @param {string} username the discord username of the user that claimed the pokemon
  * @param {string} nickname the nickname for the pokemon
  * @param {boolean} isPermanent whether the claim is permament
  * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns whether the database edit was successful
  */
-async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChangeDate, isPermanent, interactionId) {
+async function addClaimToDatabase(serverName, pokemon, userId, username, nickname, nextChangeDate, isPermanent, interactionId) {
 	const claimsTableName = generateClaimsTableName(serverName);
 
-	logMessage('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + user + ' in table ' + claimsTableName + ' as "'
+	logMessage('Adding claim for ' + toCapitalCase(pokemon) + ' from ' + userId + ' in table ' + claimsTableName + ' as "'
 	+ nickname + '". Next Date to Change Claim: ' + nextChangeDate.toDateString(), interactionId);
 	isPermanent ? logMessage('Claim will be permanent', interactionId) : logMessage('Claim will not be permanent and deleted after 1 year', interactionId);
 	let successful = false;
@@ -30,7 +31,8 @@ async function addClaimToDatabase(serverName, pokemon, user, nickname, nextChang
 		{
 			'table-name': claimsTableName,
 			'pokemon': pokemon,
-			'username': user,
+			'discord-id': userId,
+			'discord-username': username,
 			'nickname': nickname,
 			'next-change-date': nextChangeDate,
 			'is-permanent': isPermanent,
@@ -88,10 +90,12 @@ async function removeClaimFromDatabase(pokemon, serverName, interactionId) {
 
 /**
  * Formats the given response into a simplified JSON object for the bot to consume
+ * @param {string} userId the discord Id of the user that claimed the pokemon
+ * @param {string} username the discord username of the user that claimed the pokemon
  * @param {[Object]} response API response from GetUserClaims
  * @returns the simplified JSON object or error string if there was an error with the claims
  */
-function formatUserClaims(user, response) {
+function formatUserClaims(userId, username, response) {
 	const pokemonClaimed = [];
 	let nickname = undefined;
 	let nextChangeDate = undefined;
@@ -129,7 +133,8 @@ function formatUserClaims(user, response) {
 	return {
 		'claimed-pokemon': pokemonClaimed,
 		'nickname': nickname,
-		'username': user,
+		'discord-id': userId,
+		'discord-username': username,
 		'next-change-date': nextChangeDate,
 		'is-permanent': isPermanent,
 	};
@@ -137,26 +142,27 @@ function formatUserClaims(user, response) {
 
 /**
  * Queries the claims database to get all of the claims that a user has placed
- * @param {string} user the user to get the claims for
+ * @param {string} userId the discord Id of the user that claimed the pokemon
+ * @param {string} username the discord username of the user that claimed the pokemon
  * @param {string} serverName the name of the discord server the user called the command in
  * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns all claims that the user has made formatted as a JSON object
  */
-async function getUserClaims(user, serverName, interactionId) {
+async function getUserClaims(userId, username, serverName, interactionId) {
 	const claimsTableName = generateClaimsTableName(serverName);
-	logMessage('Getting all Claims for ' + user + ' in ' + claimsTableName, interactionId);
+	logMessage('Getting all Claims for ' + userId + ' in ' + claimsTableName, interactionId);
 	let userClaims = undefined;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/claimtablesgetuserclaim',
 		{
 			'table-name': claimsTableName,
-			'username': user,
+			'discord-id': userId,
 		})
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
 				logMessage('Got User Claim: ' + JSON.stringify(result['data']['body']), interactionId);
-				const formattedClaims = formatUserClaims(user, result['data']['body']);
+				const formattedClaims = formatUserClaims(userId, username, result['data']['body']);
 				if (formattedClaims == ERRORCLAIMSTRING) {
 					logMessage('Error formatting user claims. Some of the fields may be mismatched', interactionId);
 					userClaims = CLAIMSFORMATTINGERROR + ': Error formatting user claims ' + JSON.stringify(result['data']['body']) +
@@ -168,7 +174,7 @@ async function getUserClaims(user, serverName, interactionId) {
 				}
 			}
 			else if (statusCode == 404) {
-				logMessage('No Claims Found for ' + user, interactionId);
+				logMessage('No Claims Found for ' + userId, interactionId);
 				userClaims = NOCLAIMSSTRING;
 			}
 			else {
@@ -391,7 +397,7 @@ async function getClaimableRoles(server, interactionId) {
 				claimRoles = result['data']['body'];
 			}
 			else if (statusCode == 404) {
-				logMessage('Invalid Server Name', interactionId);
+				logMessage('Invalid Server Name: ' + server, interactionId);
 				evoline = INVALIDSERVERNAME;
 			}
 			else {
@@ -466,19 +472,19 @@ async function canUserMakeClaim(member, server, interactionId) {
 
 /**
  * Adds an entry into the remove-claim table with the provided information
- * @param {string} user the username of the person removing their claim
+ * @param {string} userId the discord Id of the user that claimed the pokemon
  * @param {string} server the name of the discord server the command was executed in
  * @param {Date} nextClaimDate the next available date the user can make a claim
  * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns true if the entry was added, false if there was an error
  */
-async function addEntryToRemoveClaimTable(user, server, nextClaimDate, interactionId) {
-	logMessage('Adding ' + user + '\'s removed claim in the ' + server + ' to the database.', interactionId);
+async function addEntryToRemoveClaimTable(userId, server, nextClaimDate, interactionId) {
+	logMessage('Adding ' + userId + '\'s removed claim in the ' + server + ' to the database.', interactionId);
 	let successful = false;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableadd',
 		{
-			'username': user,
+			'discord-id': userId,
 			'server-name': server,
 			'next-claim-date': nextClaimDate,
 		})
@@ -500,24 +506,24 @@ async function addEntryToRemoveClaimTable(user, server, nextClaimDate, interacti
 
 /**
  * Removes an entry from the remove-claim table. This is most likely due to the next-claim date expiring
- * @param {string} user the username of the person who removed their claim
+ * @param {string} userId the discord Id of the user that claimed the pokemon
  * @param {string} server the name of the discord server the command was executed in
  * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns true if the entry was successfully removed, false if there was an error
  */
-async function removeEntryFromRemoveClaimTable(user, server, interactionId) {
-	logMessage('Removing entry in remove-claims database for ' + user + ' in discord server ' + server, interactionId);
+async function removeEntryFromRemoveClaimTable(userId, server, interactionId) {
+	logMessage('Removing entry in remove-claims database for ' + userId + ' in discord server ' + server, interactionId);
 	let successful = false;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableremove',
 		{
-			'username': user,
+			'discord-id': userId,
 			'server-name': server,
 		})
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				logMessage('Removed-Claims entry has been removed. ' + user + ' can now claim another pokemon.', interactionId);
+				logMessage('Removed-Claims entry has been removed. ' + userId + ' can now claim another pokemon.', interactionId);
 				successful = true;
 			}
 			else {
@@ -534,21 +540,21 @@ async function removeEntryFromRemoveClaimTable(user, server, interactionId) {
  * Searches the remove-claims database for a user's claim data and determines if the user can make a claim
  * If the user made a claim greater than 3 months ago, the entry will be removed from the database
  * This is to prevent people from removing claims and immediately re-claiming something
- * @param {string} user the username of the message sender
+ * @param {string} userId the discord Id of the user that claimed the pokemon
  * @param {string} server the name of the server
  * @param {string} interactionId the id of the interaction that triggered this function. Used for logging purposes
  * @returns the next available claim date if the user made a claim within the last three months
  * false if the user can make a claim now (either no entry or entry > 3 months old)
  * undefined if there was an error
  */
-async function didUserRemoveClaim(user, server, interactionId) {
-	logMessage('Checking Remove Claims Database for ' + user + ' from ' + server, interactionId);
+async function didUserRemoveClaim(userId, server, interactionId) {
+	logMessage('Checking Remove Claims Database for ' + userId + ' from ' + server, interactionId);
 
 	let nextClaimDate = undefined;
 	await axios.post(
 		'https://2qfnb9r88i.execute-api.us-west-2.amazonaws.com/dev/removedclaimstableget',
 		{
-			'username': user,
+			'discord-id': userId,
 			'server-name': server,
 		})
 		.then(result => {
@@ -585,7 +591,7 @@ async function didUserRemoveClaim(user, server, interactionId) {
 		return nextClaimDate;
 	}
 	logMessage('User made a claim that they removed more than 3 months ago. Removing claim from remove-claim table.', interactionId);
-	await removeEntryFromRemoveClaimTable(user, server, interactionId);
+	await removeEntryFromRemoveClaimTable(userId, server, interactionId);
 	return false;
 }
 

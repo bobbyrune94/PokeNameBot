@@ -54,7 +54,8 @@ module.exports = {
 				),
 		),
 	async execute(interaction, isPermanent) {
-		const user = interaction.user.username;
+		const userId = interaction.user.id;
+		const username = interaction.user.username;
 		const serverName = interaction.guild.name;
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
 
@@ -69,7 +70,7 @@ module.exports = {
 			return sendDeferredEphemeralMessage(interaction, generatePokemonAlreadyClaimedString(pokemon_name));
 		}
 
-		const userClaim = await getUserClaims(user, serverName, interaction.id);
+		const userClaim = await getUserClaims(userId, username, serverName, interaction.id);
 		if (userClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
@@ -102,7 +103,7 @@ module.exports = {
 		let addClaimErrors = [];
 		for (const index in newEvoLine) {
 			const pokemon = newEvoLine[index];
-			if (!(await addClaimToDatabase(serverName, pokemon, user, newNickname, newChangeDate, isPermanent, interaction.id))) {
+			if (!(await addClaimToDatabase(serverName, pokemon, userId, username, newNickname, newChangeDate, isPermanent, interaction.id))) {
 				logMessage('Error adding claim for ' + toCapitalCase(pokemon), interaction.id);
 				addClaimErrors += pokemon;
 			}

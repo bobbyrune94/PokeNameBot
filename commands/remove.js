@@ -11,10 +11,11 @@ module.exports = {
 		.setDescription('Delete your claim from the system'),
 	// eslint-disable-next-line no-unused-vars
 	async execute(interaction, isPermanent) {
-		const user = interaction.user.username;
+		const userId = interaction.user.id;
+		const username = interaction.user.username;
 		const serverName = interaction.guild.name;
 
-		const userClaim = await getUserClaims(user, serverName, interaction.id);
+		const userClaim = await getUserClaims(userId, username, serverName, interaction.id);
 		if (userClaim == undefined) {
 			return sendDeferredEphemeralMessage(interaction, generateDatabaseErrorString());
 		}
@@ -37,8 +38,8 @@ module.exports = {
 			}
 		}
 
-		if (!(await addEntryToRemoveClaimTable(user, serverName, nextChangeDate, interaction.id))) {
-			logMessage('Error removing ' + user + '\'s entry from remove-claims database', interaction.id);
+		if (!(await addEntryToRemoveClaimTable(userId, serverName, nextChangeDate, interaction.id))) {
+			logMessage('Error removing ' + userId + '\'s entry from remove-claims database', interaction.id);
 		}
 
 		if (errorClaims.length > 0) {
