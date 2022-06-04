@@ -233,7 +233,6 @@ async function getPokemonClaim(pokemon, serverName, interactionId) {
  * or undefined if there was an error
  */
 async function getPokemonEvolutionaryLine(pokemon, interactionId) {
-	// TODO: replace with API query to evo-lines database
 	logMessage('Getting the evolutionary line for ' + pokemon, interactionId);
 
 	let evoline = undefined;
@@ -273,7 +272,6 @@ async function getPokemonEvolutionaryLine(pokemon, interactionId) {
  * undefined if there was an issue
  */
 async function isGenderAnomalyPokemon(pokemon, interactionId) {
-	// TODO: replace with API query to gender-anomalies database
 	logMessage('Checking if ' + pokemon + ' is a gender anomaly', interactionId);
 
 	let anomaly = undefined;
@@ -285,7 +283,7 @@ async function isGenderAnomalyPokemon(pokemon, interactionId) {
 		.then(result => {
 			const statusCode = result['data']['statusCode'];
 			if (statusCode == 200) {
-				logMessage('Claim Roles: ' + JSON.stringify(result['data']['body']), interactionId);
+				logMessage('Gender Anomaly: ' + JSON.stringify(result['data']['body']), interactionId);
 				anomaly = result['data']['body'];
 			}
 			else if (statusCode == 404) {

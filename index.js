@@ -74,7 +74,7 @@ client.on('interactionCreate', async interaction => {
 			setTimeout(() => {
 				logMessage(interaction.user.username + ' can now call another command.', interaction.id);
 				interaction.followUp({
-					content: 'You may now call another command',
+					content: 'You may now call another command. If your previous command didn\'t respond, feel free to try it again. If you made a claim or an edit, it likely went through, but had an error returning the result.',
 					ephemeral: true,
 				});
 				talkedRecently.delete(interaction.user.id);
