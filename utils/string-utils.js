@@ -331,9 +331,9 @@ function generateDirectionsCommandInfoString() {
 function generateClaimCommandInfoString() {
 	return '**/claim**: Claim a Pokemon (and its evolutionary line) for the streamer to use in a nuzlocke. \n' +
 		'\t - /claim default [pokemon] [nickname]\n' +
-			'\t\t - Ex: /claim eevee buddy\n' +
+			'\t\t - Ex: */claim default eevee buddy*\n' +
 		'\t - /claim gendered [pokemon] [male nickname] [female nickname]\n' +
-			'\t\t - Ex: /claim eevee adam eve\n';
+			'\t\t - Ex: */claim gendered eevee adam eve*\n';
 }
 
 /**
@@ -342,8 +342,8 @@ function generateClaimCommandInfoString() {
  */
 function generateViewCommandInfoString() {
 	return '**/view**: View claim data for either yourself or a given Pokemon\n' +
-	'\t - /view claim” to view your claims\n' +
-	'\t - /view pokemon [pokemon]” to see if a Pokemon has been claimed\n' +
+	'\t - */view claim* to view your claims\n' +
+	'\t - */view pokemon [pokemon]* to see if a Pokemon has been claimed\n' +
 		'\t\t - Ex: /view pokemon eevee\n';
 }
 
@@ -354,9 +354,9 @@ function generateViewCommandInfoString() {
 function generateEditCommandInfoString() {
 	return '**/edit**: Edit the nickname for your existing claim.\n' +
 	'\t - /edit default [new nickname]\n' +
-		'\t\t - Ex: /edit fluffy\n' +
+		'\t\t - Ex: */edit default fluffy*\n' +
 	'\t - /edit gendered [new male nickname] [new female nickname]\n' +
-		'\t\t - Ex: /edit king queen\n';
+		'\t\t - Ex: */edit gendered king queen*\n';
 }
 
 /**
@@ -366,9 +366,9 @@ function generateEditCommandInfoString() {
 function generateChangeCommandInfoString() {
 	return '**/change**: Changes your claim from one Pokemon line to another. Note: you can only do this once every 3 months.\n' +
 	'\t - /change default [new pokemon] [new nickname]\n' +
-		'\t\t - Ex: /change default shinx tiger\n' +
+		'\t\t - Ex: */change default shinx tiger*\n' +
 	'\t - /change gendered [new pokemon] [new male nickname] [new female nickname]\n' +
-		'\t\t - Ex: /change gendered shinx tiggs tigress\n';
+		'\t\t - Ex: */change gendered shinx tiger tigress*\n';
 }
 
 /**
@@ -387,11 +387,11 @@ function generateRemoveCommandInfoString() {
 function generatePokemonNameNotes() {
 	return 'Pokemon names have some name-formatting anomalies to make note of\n' +
 	'\t - For Farfetch\'d and Sirfetch\'d, remove the apostrophe\n' +
-		'\t\t - Ex: /claim farfetchd birdo\n' +
+		'\t\t - Ex: */claim default farfetchd birdo*\n' +
 	'\t - For the Mime family, put a dash (-) instead of a space\n' +
-		'\t\t - Ex: /claim mr-mime clown\n' +
+		'\t\t - Ex: */claim default mr-mime clown*\n' +
 	'\t - For regional variants, put the pokemon name, then a dash (-), then the region name\n' +
-		'\t\t - Ex: /claim vulpix tails (kantonian) or /claim vulpix-alola tails (alolan)\n';
+		'\t\t - Ex: */claim default vulpix tails* (kantonian) or */claim default vulpix-alola tails* (alolan)\n';
 }
 
 /**
