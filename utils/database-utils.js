@@ -432,7 +432,6 @@ async function canUserMakeClaim(member, server, interactionId) {
 
 	logMessage('Checking if ' + member.user.username + ' has the appropriate roles to make a claim.', interactionId);
 	const userRoles = member.roles.cache;
-	logMessage('User\'s roles: ' + JSON.stringify(userRoles));
 
 	if (claimRoles['perma-claim-roles'].includes('@everyone')) {
 		logMessage('Everyone is allowed to make permanent claims. Allowing user to make claims', interactionId);
@@ -448,11 +447,11 @@ async function canUserMakeClaim(member, server, interactionId) {
 	let canClaimArray = [false, false];
 	for (const role of userRoles) {
 		const roleId = role[1].id;
-		logMessage('Checking if ' + role.name + ' can make a claim in the system', interactionId);
+		logMessage('Checking if ' + role[1].name + ' can make a claim in the system', interactionId);
 		// if user hasn't been determined to make a claim yet
 		if (!canClaimArray[0]) {
 			if (claimRoles['claim-roles'].includes(roleId)) {
-				logMessage('User has ' + role.name + ' role, allowing them to make a claim in the system', interactionId);
+				logMessage('User has ' + role[1].name + ' role, allowing them to make a claim in the system', interactionId);
 				canClaimArray[0] = true;
 			}
 		}
@@ -460,7 +459,7 @@ async function canUserMakeClaim(member, server, interactionId) {
 		// if user hasn't been determined to make a permanent claim
 		if (!canClaimArray[1] && claimRoles['perma-claim-roles'].length > 0) {
 			if (claimRoles['perma-claim-roles'].includes(roleId)) {
-				logMessage('User has ' + role.name + ' role, allowing them to make a permanent claim in the system', interactionId);
+				logMessage('User has ' + role[1].name + ' role, allowing them to make a permanent claim in the system', interactionId);
 				canClaimArray[1] = true;
 				canClaimArray[0] = true; // a permanent claim role allows them to make a claim
 				break;

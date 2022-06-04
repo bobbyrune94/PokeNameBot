@@ -39,18 +39,6 @@ client.on('interactionCreate', async interaction => {
 		return;
 	}
 
-	logMessage(interaction.user.username + ' is now on cooldown. Please wait ' + Math.round(MESSAGECOOLDOWN / 1000) + ' seconds before calling another command', interaction.id);
-	talkedRecently.add(interaction.user.id);
-
-	setTimeout(() => {
-		logMessage(interaction.user.username + ' can now call another command.', interaction.id);
-		interaction.followUp({
-			content: 'You may now call another command',
-			ephemeral: true,
-		});
-		talkedRecently.delete(interaction.user.id);
-	}, MESSAGECOOLDOWN);
-
 	logMessage('Message sent in channel ' + interaction.channel.name, interaction.id);
 	if (!interaction.channel.name.includes(CHANNELNAMEREQUIREMENT)) {
 		logMessage('Incorrectly formatted channel name.', interaction.id);
@@ -75,9 +63,23 @@ client.on('interactionCreate', async interaction => {
 		const commandString = generateCommandString(interaction);
 		logMessage('Executing command: ' + commandString, interaction.id);
 
-		interaction.deferReply({ ephemeral: true }).catch(err => {
-			logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
-		});
+		if (!commandString.includes('/directions')) {
+			interaction.deferReply({ ephemeral: true }).catch(err => {
+				logMessage('Error Deferring Reploy: ' + err.toString(), interaction.id);
+			});
+
+			logMessage(interaction.user.username + ' is now on cooldown. Please wait ' + Math.round(MESSAGECOOLDOWN / 1000) + ' seconds before calling another command', interaction.id);
+			talkedRecently.add(interaction.user.id);
+
+			setTimeout(() => {
+				logMessage(interaction.user.username + ' can now call another command.', interaction.id);
+				interaction.followUp({
+					content: 'You may now call another command',
+					ephemeral: true,
+				});
+				talkedRecently.delete(interaction.user.id);
+			}, MESSAGECOOLDOWN);
+		}
 		await command.execute(interaction, rolePermissions[1]);
 	}
 	catch (error) {
