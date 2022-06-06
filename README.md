@@ -12,10 +12,9 @@ The bot has the following commands:
 - **/change**: changes a user’s claim to a different pokemon (must occur > 3 months after their first claim)
 - **/remove**: removes a user’s claim
 
-## Lambdas
-The lambdas code is the code used by AWS Lambdas to add, edit, and remove entries from the DynamoDB tables. 
-
 ## Other Scripts
 - **deploy-commands.js**: used to deploy all the commands to the discord bot
 - **clean-commands.js**: used to clean up discord-server-specific commands from the discord bot
 - **evo-line-generator.py**: used to generate all the evolutionary line data to put into the tables. Makes calls to PokeAPI to generate the data, then includes regional forms.
+
+Repository for the lambda code can be found here: https://github.com/bobbyrune94/NuzlockeNameClaimLambdas
