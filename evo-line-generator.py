@@ -14,8 +14,8 @@ alolan_forms = {
     "raichu-alola": ["raichu-alola"],
     "sandshrew-alola": ["sandshrew-alola", "sandslash-alola"], 
     "sandslash-alola": ["sandshrew-alola", "sandslash-alola"],
-    "vulpix-alola": ["vulpix-alola", "ninetails-alola"],
-    "ninetails-alola": ["vulpix-alola", "ninetails-alola"],
+    "vulpix-alola": ["vulpix-alola", "ninetales-alola"],
+    "ninetales-alola": ["vulpix-alola", "ninetales-alola"],
     "diglett-alola": ["diglett-alola", "dugtrio-alola"],
     "dugtrio-alola": ["diglett-alola", "dugtrio-alola"],
     "meowth-alola": ["meowth-alola", "persian-alola"], 
@@ -63,12 +63,12 @@ hisuian_forms = {
     "voltorb-hisui": ["voltorb-hisui", "electrode-hisui"],
     "electrode-hisui": ["voltorb-hisui", "electrode-hisui"],
     "typhlosion-hisui": ["typhlosion-hisui"],
-    "quilfish-hisui": ["quilfish-hisui", "overquil"],
-    "overquil": ["quilfish-hisui", "overquil"],
+    "qwilfish-hisui": ["qwilfish-hisui", "overqwil"],
+    "overqwil": ["qwilfish-hisui", "overqwil"],
     "sneasel-hisui": ["sneasel-hisui", "sneasler"],
     "sneasler": ["sneasel-hisui", "sneasler"],
     "samurott-hisui": ["samurott-hisui"],
-    "liligant-hisui": ["liligant-hisui"],
+    "lilligant-hisui": ["lilligant-hisui"],
     "zorua-hisui": ["zorua-hisui", "zoroark-hisui"],
     "zoroark-hisui": ["zorua-hisui", "zoroark-hisui"],
     "braviary-hisui": ["braviary-hisui"],
@@ -175,6 +175,11 @@ only_male = [
     "grimmsnarl"
 ]
 
+class PokemonData():
+    def __init__(self, evo_lines):
+        self.dex_num = 0
+        self.sprite_url = "UNDEFINED URL"
+        self.evo_lines = evo_lines
 
 """
 Handles the evolution chain separately from how other evolution lines are handled. This function will break up any evolution
@@ -273,7 +278,7 @@ formatted_branches (list of strings): a list of json-formatted strings to output
 def add_branches_to_data(evo_branches, evo_data):
     for branch in evo_branches:
         for pokemon in branch:
-            evo_data[pokemon] = branch
+            evo_data[pokemon] = PokemonData(branch)
 
 def capitalize(str):
     return str.capitalize()
@@ -317,20 +322,22 @@ def generate_evo_chain_data():
 
     print("Adding Regional Forms")
     for form in alolan_forms:
-        evo_line_data[form] = alolan_forms[form]
+        evo_line_data[form] = PokemonData(alolan_forms[form])
     
     for form in galar_forms:
-        evo_line_data[form] = galar_forms[form]
+        evo_line_data[form] = PokemonData(galar_forms[form])
 
     for form in hisuian_forms:
-        evo_line_data[form] = hisuian_forms[form]
+        evo_line_data[form] = PokemonData(hisuian_forms[form])
+
+    return evo_line_data
     
-    file = open("pokemon-evolution-lines.json", "w")
+    # file = open("pokemon-evolution-lines.json", "w")
 
-    file.write(json.dumps(evo_line_data, indent=4))
+    # file.write(json.dumps(evo_line_data, indent=4))
 
-    print("Indices with error: ")
-    print(error_indices)
+    # print("Indices with error: ")
+    # print(error_indices)
 
 """
 Pulls all gender-less Pokemon from PokeAPI and outputs it to a file
@@ -351,58 +358,35 @@ def generate_gender_anomaly_pokemon_data():
     file = open("pokemon-gender-anomaly.json", "w")
     file.write(json.dumps(gender_anomalies, indent=4))
 
-def generate_pokemon_selection_lists():
-    all_pokemon_selections = []
-    two_gendered_pokemon_selections = []
-
-    gender_anomalies = json.load(open('pokemon-gender-anomaly.json'))
-
-    end_index = 898
-    error_indices = []
-    for index in range(1, end_index + 1):
-        print(index)
+def get_pokemon_id_and_sprite_url(pokemon_data):
+    for pokemon in pokemon_data:
+        print(pokemon)
         try:
-            response = requests.get("https://pokeapi.co/api/v2/pokemon/" + str(index))
-            pokemon_name = response.json()["species"]["name"]
-            selection_element = generate_pokemon_selection_element(pokemon_name)
-            all_pokemon_selections.append(selection_element)
-            if pokemon_name not in gender_anomalies["genderless"] and pokemon_name not in gender_anomalies["only_male"] and pokemon_name not in gender_anomalies["only_female"]:
-                two_gendered_pokemon_selections.append(selection_element)
+            response = requests.get("https://pokeapi.co/api/v2/pokemon/" + pokemon)
+            pokemon_data[pokemon].dex_num = response.json()["id"]
+            pokemon_data[pokemon].sprite_url = response.json()["sprites"]["front_default"]
         except:
-            print("Error has occurred on index " + str(index))
-            error_indices.append(index)
-    
-    print("Adding Regional Forms")
-    for form in alolan_forms:
-        all_pokemon_selections.append(generate_pokemon_selection_element(form))
-        if form not in gender_anomalies["genderless"] and form not in gender_anomalies["only_male"] and form not in gender_anomalies["only_female"]:
-            two_gendered_pokemon_selections.append(selection_element)
-    
-    for form in galar_forms:
-        all_pokemon_selections.append(generate_pokemon_selection_element(form))
-        if form not in gender_anomalies["genderless"] and form not in gender_anomalies["only_male"] and form not in gender_anomalies["only_female"]:
-            two_gendered_pokemon_selections.append(selection_element)
+            print("Error occurred with getting data for " + pokemon)
 
-    for form in hisuian_forms:
-        all_pokemon_selections.append(generate_pokemon_selection_element(form))
-        if form not in gender_anomalies["genderless"] and form not in gender_anomalies["only_male"] and form not in gender_anomalies["only_female"]:
-            two_gendered_pokemon_selections.append(selection_element)
+    return pokemon_data
 
-    file = open("pokemon-all-selections.json", "w")
-
-    file.write(json.dumps(all_pokemon_selections, indent=4))
-
-    file = open("pokemon-two-gendered-selections.json", "w")
-
-    file.write(json.dumps(two_gendered_pokemon_selections, indent=4))
-
-    print("Indices with error: ")
-    print(error_indices)
 
 def main():
-    # generate_evo_chain_data()
+    pokemon_evo_data = generate_evo_chain_data()
     # generate_gender_anomaly_pokemon_data()
-    generate_pokemon_selection_lists()
+    pokemon_data = get_pokemon_id_and_sprite_url(pokemon_evo_data)
+
+    file = open("pokemon-data.json", "w")
+    file.write("{\n")
+    is_first = True
+    for pokemon in pokemon_data:
+        if is_first:
+            is_first = False
+        else:
+            file.write(',\n')
+        file.write('\t"' + pokemon + '": ')
+        file.write(json.dumps(pokemon_data[pokemon].__dict__))
+    file.write("\n}")
 
 if __name__ == "__main__":
     main()
