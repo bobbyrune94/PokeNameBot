@@ -17,4 +17,5 @@ The bot has the following commands:
 - **clean-commands.js**: used to clean up discord-server-specific commands from the discord bot
 - **evo-line-generator.py**: used to generate all the evolutionary line data to put into the tables. Makes calls to PokeAPI to generate the data, then includes regional forms.
 
-Repository for the lambda code can be found here: https://github.com/bobbyrune94/NuzlockeNameClaimLambdas
+Repository for the lambda code can be found here: https://github.com/bobbyrune94/PokeNameBotLambdas
+Repository for the website code can be found here: https://github.com/bobbyrune94/PokeNameBotSite
