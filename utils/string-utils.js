@@ -202,12 +202,13 @@ function generateViewClaimNotClaimedString(pokemon, evoline) {
  * Generates the output string for a user with existing claims viewing their claims
  * @param {list of string} claimedPokemon the pokemon that the user has claimed
  * @param {string} nickname the nickname the user claimed for the pokemon
+ * @param {date} nextChangeDate the next time the user can change their claim
  * @returns the formatted error string
  */
-function generateUserClaimString(claimedPokemon, nickname) {
+function generateUserClaimString(claimedPokemon, nickname, nextChangeDate) {
 	const capitalizedPokemon = claimedPokemon.map(pokemon => toCapitalCase(pokemon));
 	return 'You have claimed the following pokemon: ' + generateListString(capitalizedPokemon)
-    + ' with the nickname "' + nickname + '".';
+    + ' with the nickname "' + nickname + '". The next time you can change your claim is ' + nextChangeDate.toDateString();
 }
 
 /**

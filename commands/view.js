@@ -77,10 +77,11 @@ module.exports = {
 			else {
 				const claimedPokemon = userClaim['claimed-pokemon'];
 				const nickname = userClaim['nickname'];
+				const nextChangeDate = new Date(userClaim['next-change-date']);
 				if (claimedPokemon == undefined || claimedPokemon.length == 0) {
 					return sendDeferredEphemeralMessage(interaction, generateNoUserClaimString());
 				}
-				return sendDeferredEphemeralMessage(interaction, generateUserClaimString(claimedPokemon, nickname));
+				return sendDeferredEphemeralMessage(interaction, generateUserClaimString(claimedPokemon, nickname, nextChangeDate));
 			}
 		}
 	},
