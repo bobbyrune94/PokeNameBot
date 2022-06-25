@@ -10,7 +10,7 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 const talkedRecently = new Set();
 const MESSAGECOOLDOWN = 15000; // 15 seconds
-const CHANNELNAMEREQUIREMENT = 'nuzlocke-name-claim';
+const CHANNELNAMEREQUIREMENT = 'poke-name-claim';
 
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -42,7 +42,7 @@ client.on('interactionCreate', async interaction => {
 	logMessage('Message sent in channel ' + interaction.channel.name, interaction.id);
 	if (!interaction.channel.name.includes(CHANNELNAMEREQUIREMENT)) {
 		logMessage('Incorrectly formatted channel name.', interaction.id);
-		sendEphemeralMessage(interaction, 'WrongChannelError: Please use this command in the "nuzlocke-name-claim" channel only.');
+		sendEphemeralMessage(interaction, 'WrongChannelError: Please use this command in the "' + CHANNELNAMEREQUIREMENT + '" channel only.');
 		return;
 	}
 	logMessage('Channel name fits parameters. Continuing', interaction.id);

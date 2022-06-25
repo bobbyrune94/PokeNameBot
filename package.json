@@ -1,7 +1,7 @@
 {
-  "name": "nuzlocke-name-claim-bot",
+  "name": "pokenamebot",
   "version": "1.0.0",
-  "description": "Discord bot for Pokemon Communities to claim Pokemon Evolutionary Lines for their streamers to use in a nuzlocke playthrough",
+  "description": "Discord bot for Pokemon Communities to claim Pokemon Evolutionary Lines for their streamers to use in a playthrough",
   "main": "index.js",
   "dependencies": {
     "@discordjs/builders": "^0.12.0",

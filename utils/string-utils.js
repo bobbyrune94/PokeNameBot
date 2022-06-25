@@ -329,7 +329,7 @@ function generateDirectionsCommandInfoString() {
  * @returns the formatted info string
  */
 function generateClaimCommandInfoString() {
-	return '**/claim**: Claim a Pokemon (and its evolutionary line) for the streamer to use in a nuzlocke. \n' +
+	return '**/claim**: Claim a Pokemon (and its evolutionary line) for the streamer to use in a playthrough. \n' +
 		'\t - /claim default [pokemon] [nickname]\n' +
 			'\t\t - Ex: */claim default eevee buddy*\n' +
 		'\t - /claim gendered [pokemon] [male nickname] [female nickname]\n' +

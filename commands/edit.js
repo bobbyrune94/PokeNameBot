@@ -39,7 +39,7 @@ module.exports = {
 		),
 	async execute(interaction, isPermanent) {
 		const userId = interaction.user.id;
-		const username = interaction.user.username;
+		const username = interaction.member.nickname;
 		const serverName = interaction.guild.name;
 
 		const userClaim = await getUserClaims(userId, username, serverName, interaction.id);

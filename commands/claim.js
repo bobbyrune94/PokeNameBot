@@ -11,7 +11,7 @@ const { toCapitalCase, generateInvalidNameString, generateUserAlreadyClaimedStri
 module.exports = {
 	data : new SlashCommandBuilder()
 		.setName('claim')
-		.setDescription('Claim a pokemon for your streamer to nickname in their nuzlocke')
+		.setDescription('Claim a pokemon for your streamer to nickname in their playthrough')
 		.addSubcommand(subcommand =>
 			subcommand
 				.setName('default')
@@ -54,7 +54,7 @@ module.exports = {
 		),
 	async execute(interaction, isPermanent) {
 		const userId = interaction.user.id;
-		const username = interaction.user.username;
+		const username = interaction.member.nickname;
 		const serverName = interaction.guild.name;
 		const pokemon_name = interaction.options.getString('pokemon').toLowerCase();
 
