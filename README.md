@@ -1,8 +1,8 @@
-# Nuzlocke Name Claim 
-This repository stores the code for the discord bot and lambdas portion of the Nuzlocke Name Claim System.
+# PokeNameBot
+This repository stores the code for the discord bot portion of the PokeNameBot System.
 
 ## Discord Bot
-The discord bot allows for registered users in a discord server to claim a nickname for a pokemon evolutionary line for a streamer to use when playing a nuzlocke or other Pokemon playthrough. It interfaces with DynamoDB tables to check for registered claim roles, pokemon claim data, pokemon evolutionary lines, pokemon gender anomalies, etc.
+The discord bot allows for registered users in a discord server to claim a nickname for a pokemon evolutionary line for a streamer to use when playing a Pokemon playthrough. It interfaces with DynamoDB tables to check for registered claim roles, pokemon claim data, pokemon evolutionary lines, pokemon gender anomalies, etc.
 
 The bot has the following commands:
 - **/directions**: get usage instructions on the other commands
