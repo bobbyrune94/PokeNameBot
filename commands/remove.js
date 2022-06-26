@@ -12,7 +12,7 @@ module.exports = {
 	// eslint-disable-next-line no-unused-vars
 	async execute(interaction, isPermanent) {
 		const userId = interaction.user.id;
-		const username = interaction.member.nickname;
+		const username = interaction.member.nickname != null ? interaction.member.nickname : interaction.user.username;
 		const serverName = interaction.guild.name;
 
 		const userClaim = await getUserClaims(userId, username, serverName, interaction.id);
