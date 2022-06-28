@@ -3,6 +3,6 @@ SSH Into Instances: ssh -i "BotInstanceKeyPair.pem" ubuntu@ec2-34-216-82-37.us-w
 List Process: ps -eaf
 Kill Process: kill [pid]
 
-Start Process: pm2 start index.js
+Start Process: pm2 start ecosystem.config.js
 
 Check Logs: $HOME/.pm2/logs
