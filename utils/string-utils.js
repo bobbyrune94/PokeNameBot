@@ -318,81 +318,18 @@ function generateDatabaseErrorString() {
 }
 
 /**
- * Generates the usage information for the directions command
- * @returns the formatted info string
+ * Generates the string to return for the directions command
  */
-function generateDirectionsCommandInfoString() {
-	return '**/directions**: View usage instructions for this discord bot\n';
-}
-
-/**
- * Generates the usage information for the claim command
- * @returns the formatted info string
- */
-function generateClaimCommandInfoString() {
-	return '**/claim**: Claim a Pokemon (and its evolutionary line) for the streamer to use in a playthrough. \n' +
-		'\t - /claim default [pokemon] [nickname]\n' +
-			'\t\t - Ex: */claim default eevee buddy*\n' +
-		'\t - /claim gendered [pokemon] [male nickname] [female nickname]\n' +
-			'\t\t - Ex: */claim gendered eevee adam eve*\n';
-}
-
-/**
- * Generates the usage information for the view command
- * @returns the formatted info string
- */
-function generateViewCommandInfoString() {
-	return '**/view**: View claim data for either yourself or a given Pokemon\n' +
-	'\t - */view claim* to view your claims\n' +
-	'\t - */view pokemon [pokemon]* to see if a Pokemon has been claimed\n' +
-		'\t\t - Ex: /view pokemon eevee\n';
-}
-
-/**
- * Generates the usage information for the edit command
- * @returns the formatted info string
- */
-function generateEditCommandInfoString() {
-	return '**/edit**: Edit the nickname for your existing claim.\n' +
-	'\t - /edit default [new nickname]\n' +
-		'\t\t - Ex: */edit default fluffy*\n' +
-	'\t - /edit gendered [new male nickname] [new female nickname]\n' +
-		'\t\t - Ex: */edit gendered king queen*\n';
-}
-
-/**
- * Generates the usage information for the change command
- * @returns the formatted info string
- */
-function generateChangeCommandInfoString() {
-	return '**/change**: Changes your claim from one Pokemon line to another. Note: you can only do this once every 3 months.\n' +
-	'\t - /change default [new pokemon] [new nickname]\n' +
-		'\t\t - Ex: */change default shinx tiger*\n' +
-	'\t - /change gendered [new pokemon] [new male nickname] [new female nickname]\n' +
-		'\t\t - Ex: */change gendered shinx tiger tigress*\n';
-}
-
-/**
- * Generates the usage information for the remove command
- * @returns the formatted info string
- */
-function generateRemoveCommandInfoString() {
-	return '**/remove**: Removes your existing claims. Once you remove a claim, you will still not be able to make another claim until 3 months after your original claim was made.\n' +
-	'\t - /remove\n';
-}
-
-/**
- * Generates the notes for Pokemon name formatting
- * @returns the formatted info string
- */
-function generatePokemonNameNotes() {
-	return 'Pokemon names have some name-formatting anomalies to make note of\n' +
-	'\t - For Farfetch\'d and Sirfetch\'d, remove the apostrophe\n' +
-		'\t\t - Ex: */claim default farfetchd birdo*\n' +
-	'\t - For the Mime family, put a dash (-) instead of a space\n' +
-		'\t\t - Ex: */claim default mr-mime clown*\n' +
-	'\t - For regional variants, put the pokemon name, then a dash (-), then the region name\n' +
-		'\t\t - Ex: */claim default vulpix tails* (kantonian) or */claim default vulpix-alola tails* (alolan)\n';
+function generateDirectionsString() {
+	return 'To call commands for this bot, type "/" and select the command you wish to call.\n\n' +
+	'PokeNameBot has the following commands you can use:\n' +
+	'\t- **/directions** (the command you just ran): See what all the commands in this bot do\n' +
+	'\t- **/claim**: Give a Pokemon (and its evolutionary line) a nickname for the streamer to use in their playthroughs.\n' +
+	'\t- **/view**: View claim data for either yourself or a Pokemon.\n' +
+	'\t- **/edit**: Edit the nickname for your existing claim.\n' +
+	'\t- **/change**: Changes your claim from one Pokemon line to another. Note: you can only do this once every 3 months.\n' +
+	'\t- **/remove**: Removes your claim. Once you remove a claim, you will still not be able to make another claim until 3 months after your original claim was made.\n\n' +
+	'For more information on these commands, check out https://www.pokeclaim.com/usage';
 }
 
 /**
@@ -403,25 +340,11 @@ function generateInvalidCommandNameString() {
 	return 'Invalid command selection. Please try again';
 }
 
-/**
- * Generates the string to display all necessary information on how to use the bot commands
- * @returns the formatted string
- */
-function generateAllCommandInfoString() {
-	return 'Discord Bot Commands:\n' +
-	generateDirectionsCommandInfoString + generateClaimCommandInfoString + generateViewCommandInfoString() +
-	generateEditCommandInfoString() + generateChangeCommandInfoString() + generateRemoveCommandInfoString() +
-	'**Notes**:\n' + generatePokemonNameNotes() + CONTACTKENNYINFOSTRING;
-}
-
 module.exports = { CONTACTKENNYISSUESSTRING, CONTACTKENNYINFOSTRING, UNDEFINEDENTRY, INVALIDGENDEREDCLAIMERROR, toCapitalCase, generateInvalidNameString,
 	generateInvalidGenderedNickname, generatePokemonAlreadyClaimedString, generateNoUserClaimString, generateUserClaimString,
 	generateUserAlreadyClaimedString, generateSuccessfulClaimString, generateViewClaimAlreadyClaimedString,
-	generateViewClaimNotClaimedString, generateDBEditErrors, generateGenderedNickname,
-	generateSuccessfulUpdateString, generateEarlyClaimChangeString, generateSuccessfulClaimChangeString,
-	generateSuccessfulRemovalString, generateCommandString, generateListString, sendEphemeralMessage, generateAllCommandInfoString,
-	generateRemovedClaimString, generateDirectionsCommandInfoString, generateClaimCommandInfoString, generateViewCommandInfoString,
-	generateEditCommandInfoString, generateChangeCommandInfoString, generateRemoveCommandInfoString, generatePokemonNameNotes,
-	generateInvalidCommandNameString, generateClaimsTableName, generateDatabaseErrorString, sendDeferredEphemeralMessage,
+	generateViewClaimNotClaimedString, generateDBEditErrors, generateGenderedNickname, generateSuccessfulUpdateString, generateEarlyClaimChangeString, generateSuccessfulClaimChangeString,
+	generateSuccessfulRemovalString, generateCommandString, generateListString, sendEphemeralMessage, generateRemovedClaimString,
+	generateInvalidCommandNameString, generateClaimsTableName, generateDatabaseErrorString, sendDeferredEphemeralMessage, generateDirectionsString,
 	INVALIDPOKEMONNAMESTRING, INVALIDSERVERNAME, NOCLAIMSSTRING, NOREMOVECLAIMDATA, ERRORCLAIMSTRING, CLAIMSFORMATTINGERROR,
 	INVALIDNICKNAMEERROR, TWOGENDEREDSTRING };

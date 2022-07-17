@@ -3,7 +3,6 @@ const { Client, Collection, Intents } = require('discord.js');
 const { token } = require('./config.json');
 const { generateCommandString, sendEphemeralMessage } = require('./utils/string-utils');
 const { canUserMakeClaim } = require('./utils/database-utils');
-const { handleDescriptionSelectMenu } = require('./utils/select-menu-utils');
 const { logMessage } = require('./utils/logging-utils.js');
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
@@ -28,9 +27,6 @@ client.on('interactionCreate', async interaction => {
 	logMessage('Interaction triggered from user ' + interaction.user.username, interaction.id);
 	if (!interaction.isCommand()) {
 		if (!interaction.isSelectMenu()) return;
-		logMessage('Select Menu Event Detected. User Selected: ' + interaction.values[0], interaction.id);
-		handleDescriptionSelectMenu(interaction);
-		return;
 	}
 
 	if (talkedRecently.has(interaction.user.id)) {
